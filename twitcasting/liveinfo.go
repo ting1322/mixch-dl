@@ -3,8 +3,8 @@ package twitcasting
 import (
 	"encoding/json"
 	"errors"
-	"log"
 	"inter"
+	"log"
 	"regexp"
 )
 

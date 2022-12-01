@@ -3,10 +3,10 @@ package twitcasting
 import (
 	"context"
 	"fmt"
+	"inter"
 	"io"
 	"log"
 	"time"
-	"inter"
 
 	"nhooyr.io/websocket"
 )

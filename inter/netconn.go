@@ -29,7 +29,7 @@ func NewNetConn() *Net {
 func (m Net) Post(ctx context.Context, urltest string, data map[string]string) (string, error) {
 	log.Println("POST:", urltest)
 	var b bytes.Buffer
-    w := multipart.NewWriter(&b)
+	w := multipart.NewWriter(&b)
 	for k, v := range data {
 		fw, _ := w.CreateFormField(k)
 		fw.Write([]byte(v))

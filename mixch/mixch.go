@@ -5,13 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/ting1322/chat-player/pkg/cplayer"
 	"inter"
 	"log"
 	"m3u8"
 	"regexp"
 	"strings"
 	"time"
-	"github.com/ting1322/chat-player/pkg/cplayer"
 )
 
 type Mixch struct {

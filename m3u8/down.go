@@ -3,12 +3,12 @@ package m3u8
 import (
 	"context"
 	"errors"
+	"inter"
 	"io"
 	"log"
 	"strconv"
 	"strings"
 	"time"
-	"inter"
 )
 
 var M3U8FormatError error = errors.New("m3u8 format error")

@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/ting1322/chat-player/pkg/cplayer"
 	"inter"
 	"log"
 	"strings"
 	"time"
-	"github.com/ting1322/chat-player/pkg/cplayer"
 )
 
 type jmap = map[string]any
@@ -106,7 +106,7 @@ func (m *Live) Download(ctx context.Context, netconn inter.INet, fio inter.IFs, 
 	}
 
 	vd := &VDown{
-		fs: fio,
+		fs:   fio,
 		conn: netconn,
 	}
 	vd.DownloadMerge(ctx, m.VideoUrl, filename)

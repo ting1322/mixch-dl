@@ -1,9 +1,9 @@
 package twitcasting
 
 import (
+	"bytes"
 	_ "embed"
 	"testing"
-	"bytes"
 )
 
 //go:embed testdata/chat1.json

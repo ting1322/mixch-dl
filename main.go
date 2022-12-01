@@ -19,29 +19,12 @@ var (
 	netconn    inter.INet       = &inter.Net{}
 )
 
-func waitLiveStart(ctx context.Context, live *mixch.Mixch) error {
-	timer := time.NewTimer(30 * time.Second)
-	for {
-		log.Println("no live, retry after 30s")
-		<-timer.C
-		err := live.LoadUserPage(ctx, netconn)
-		if err == nil {
-			log.Println("live start.")
-			return nil
-		}
-		if err != inter.ErrNolive {
-			return err
-		}
-		timer.Reset(30 * time.Second)
-	}
-}
-
 func parseTime(text string) (time.Time, error) {
 	now := time.Now().Local()
 	t, err := time.ParseInLocation("15:04", os.Args[2], time.Now().Location())
 	if err == nil {
 		y, m, d := now.Date()
-		t = t.AddDate(y, int(m) - 1, d - 1)
+		t = t.AddDate(y, int(m)-1, d-1)
 		if t.Before(now) {
 			t = t.AddDate(0, 0, 1)
 		}
@@ -85,25 +68,18 @@ need a url as argument, for example:
 	var live inter.Live
 	if mixch.Support(url) {
 		filename = fmt.Sprintf("mixch-%v", time.Now().Local().Format("2006-01-02-15-04"))
-		mlive, err := mixch.New(url)
-		live = mlive
+		live, err := mixch.New(url)
 		if err != nil {
 			log.Fatal(err)
 		}
-		err = mlive.LoadUserPage(ctx, netconn)
-		if err == inter.ErrNolive {
-			err = waitLiveStart(ctx, mlive)
-			if err != nil {
-				log.Fatal(err)
-			}
-		} else if err != nil {
+		err = live.WaitStreamStart(ctx, netconn)
+		if err != nil {
 			log.Fatal(err)
 		}
 	} else if twitcasting.Support(url) {
 		filename = fmt.Sprintf("twitcasting-%v", time.Now().Local().Format("2006-01-02-15-04"))
-		tlive := twitcasting.New(url)
-		live = tlive
-		err := tlive.WaitStreamStart(ctx, netconn)
+		live := twitcasting.New(url)
+		err := live.WaitStreamStart(ctx, netconn)
 		if err != nil {
 			log.Fatal(err)
 		}
