@@ -5,6 +5,10 @@
 *.so
 *.dylib
 
+mixch-dl
+mixch-dl.exe
+mixch-dl-*.zip
+
 # Test binary, built with `go test -c`
 *.test
 
