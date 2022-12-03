@@ -58,12 +58,12 @@ func (v *VDown) try1(ctx context.Context, netconn inter.INet, wssurl string, wri
 	}
 
 	c, _, err := websocket.Dial(ctx2, wssurl, dopt)
-	c.SetReadLimit(1024 * 1024 * 4)
 	cancel()
 	if err != nil {
 		log.Println(err)
 		return fmt.Errorf("open websocket: %w", err)
 	}
+	c.SetReadLimit(1024 * 1024 * 4)
 
 	defer func() {
 		c.Close(websocket.StatusNormalClosure, "")
