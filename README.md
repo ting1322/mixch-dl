@@ -52,3 +52,14 @@ github 有上傳執行檔給 windows 64-bit, linux 64-bit。
 
 如果執行的當下，指定的網址並沒有直播，會每隔 30 秒連一次網路，直到直播開始。
 如果知道大概的開台時間，推薦使用第二個參數設定時間，節省網路資源。
+
+cookie 的部份，會試著從瀏覽器抓。如果 firefox + chrome 同時都有登入的狀況，
+似乎會抓到多個相同的 cookie？這我不太確定，如果怪怪的，建議只保留一個瀏覽器
+是登入狀態，其他瀏覽器的 cookie 都清掉。
+
+# dependency
+
+除了 golang 內建 library 之外，還有參考引用別人的專案
+
+1. nhooyr.io/websocket 連接 mixch 的 聊天室，以及 twitcasting 的 影片＋聊天室
+2. github.com/zellyn/kooky 用來讀取瀏覽器的 cookie
