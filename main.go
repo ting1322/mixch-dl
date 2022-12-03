@@ -16,7 +16,7 @@ import (
 var (
 	downloader *m3u8.Downloader = &m3u8.Downloader{}
 	fio        inter.IFs        = &inter.Fs{}
-	netconn    inter.INet       = &inter.Net{}
+	netconn    inter.INet
 )
 
 func parseTime(text string) (time.Time, error) {
@@ -67,8 +67,10 @@ need a url as argument, for example:
 	var filename string
 	var live inter.Live
 	if mixch.Support(url) {
+		netconn = inter.NewNetConn(url)
 		filename = fmt.Sprintf("mixch-%v", time.Now().Local().Format("2006-01-02-15-04"))
-		live, err := mixch.New(url)
+		var err error
+		live, err = mixch.New(url)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -77,8 +79,9 @@ need a url as argument, for example:
 			log.Fatal(err)
 		}
 	} else if twitcasting.Support(url) {
+		netconn = inter.NewNetConn(url)
 		filename = fmt.Sprintf("twitcasting-%v", time.Now().Local().Format("2006-01-02-15-04"))
-		live := twitcasting.New(url)
+		live = twitcasting.New(url)
 		err := live.WaitStreamStart(ctx, netconn)
 		if err != nil {
 			log.Fatal(err)

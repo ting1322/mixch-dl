@@ -71,9 +71,9 @@ func (m *Live) LoadUserPage(ctx context.Context, conn inter.INet) error {
 		return fmt.Errorf("get video info: %w", err)
 	}
 
-	log.Println(webText)
 	err = parseStreamInfo(m, webText)
 	if err != nil {
+		log.Printf("Response: %v\n", webText)
 		return fmt.Errorf("parse video info: %w", err)
 	}
 
@@ -85,6 +85,7 @@ func (m *Live) LoadUserPage(ctx context.Context, conn inter.INet) error {
 	}
 	err = parseChatInfo(m, webText)
 	if err != nil {
+		log.Printf("Response: %v\n", webText)
 		return fmt.Errorf("parse chat info: %w", err)
 	}
 	if !m.IsLive || len(m.VideoUrl) == 0 || len(m.Chat) == 0 {
