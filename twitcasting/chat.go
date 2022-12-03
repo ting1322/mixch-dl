@@ -16,7 +16,7 @@ type Chat struct {
 	Fs inter.IFs
 }
 
-func (c *Chat) Connect(ctx context.Context, wssurl string, filename string) {
+func (c *Chat) Connect(ctx context.Context, netconn inter.INet, wssurl string, filename string) {
 	writer, err := c.Fs.Create(filename + ".live_chat.json")
 	if err != nil {
 		log.Println(err)
@@ -29,16 +29,19 @@ func (c *Chat) Connect(ctx context.Context, wssurl string, filename string) {
 		case <-ctx.Done():
 			return
 		default:
-			c.connectTry1(ctx, wssurl, writer)
+			c.connectTry1(ctx, netconn, wssurl, writer)
 		}
 	}
 
 }
 
-func (chat *Chat) connectTry1(ctx context.Context, wssUrl string, writer io.Writer) {
+func (chat *Chat) connectTry1(ctx context.Context, netconn inter.INet, wssUrl string, writer io.Writer) {
 	ctx2, cancel := context.WithTimeout(ctx, 15*time.Second)
 	log.Println("WSS (chat):", wssUrl)
-	c, _, err := websocket.Dial(ctx2, wssUrl, nil)
+	dopt := &websocket.DialOptions{
+		HTTPClient: netconn.GetHttpClient(),
+	}
+	c, _, err := websocket.Dial(ctx2, wssUrl, dopt)
 	cancel()
 	if err != nil {
 		log.Println(err)

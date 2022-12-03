@@ -16,14 +16,14 @@ type VDown struct {
 	conn inter.INet
 }
 
-func (v *VDown) DownloadMerge(ctx context.Context, wssurl string, filename string) {
+func (v *VDown) DownloadMerge(ctx context.Context, netconn inter.INet, wssurl string, filename string) {
 	tspartFilename := filename + ".ts.part"
-	v.downloadLoop(ctx, wssurl, tspartFilename)
+	v.downloadLoop(ctx, netconn, wssurl, tspartFilename)
 	if v.fs.Exist(tspartFilename) {
 		inter.FfmpegMerge(tspartFilename, filename+".mp4", true)
 	}
 }
-func (v *VDown) downloadLoop(ctx context.Context, wssurl, filename string) {
+func (v *VDown) downloadLoop(ctx context.Context, netconn inter.INet, wssurl, filename string) {
 	writer, err := v.fs.Create(filename)
 	if err != nil {
 		log.Println("downloadLoop", err)
@@ -37,7 +37,7 @@ func (v *VDown) downloadLoop(ctx context.Context, wssurl, filename string) {
 		case <-ctx.Done():
 			return
 		default:
-			err := v.try1(ctx, wssurl, writer)
+			err := v.try1(ctx, netconn, wssurl, writer)
 			if err != nil {
 				retry--
 				log.Printf("WSS(video) error, retry=%v, %v\n", retry, err)
@@ -50,10 +50,14 @@ func (v *VDown) downloadLoop(ctx context.Context, wssurl, filename string) {
 		}
 	}
 }
-func (v *VDown) try1(ctx context.Context, wssurl string, writer io.Writer) error {
+func (v *VDown) try1(ctx context.Context, netconn inter.INet, wssurl string, writer io.Writer) error {
 	ctx2, cancel := context.WithTimeout(ctx, 15*time.Second)
 	log.Println("WSS(video):", wssurl)
-	c, _, err := websocket.Dial(ctx2, wssurl, nil)
+	dopt := &websocket.DialOptions{
+		HTTPClient: netconn.GetHttpClient(),
+	}
+
+	c, _, err := websocket.Dial(ctx2, wssurl, dopt)
 	c.SetReadLimit(1024 * 1024 * 4)
 	cancel()
 	if err != nil {

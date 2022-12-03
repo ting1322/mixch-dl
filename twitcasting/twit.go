@@ -101,7 +101,7 @@ func (m *Live) Download(ctx context.Context, netconn inter.INet, fio inter.IFs, 
 	if len(m.Chat) > 0 {
 		cs = make(chan int, 1)
 		go func() {
-			chat.Connect(ctx2, m.Chat, filename)
+			chat.Connect(ctx2, netconn, m.Chat, filename)
 			cs <- 1
 		}()
 	}
@@ -110,7 +110,7 @@ func (m *Live) Download(ctx context.Context, netconn inter.INet, fio inter.IFs, 
 		fs:   fio,
 		conn: netconn,
 	}
-	vd.DownloadMerge(ctx, m.VideoUrl, filename)
+	vd.DownloadMerge(ctx, netconn, m.VideoUrl, filename)
 	cancel()
 	if cs != nil {
 		<-cs

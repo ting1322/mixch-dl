@@ -20,10 +20,15 @@ type INet interface {
 	GetWebPage(ctx context.Context, url string) (string, error)
 	GetFile(ctx context.Context, url string) ([]byte, error)
 	Post(ctx context.Context, url string, data map[string]string) (string, error)
+	GetHttpClient() *http.Client
 }
 
 type Net struct {
 	client http.Client
+}
+
+func (m *Net) GetHttpClient() *http.Client {
+	return &m.client
 }
 
 func NewNetConn(baseurl string) *Net {

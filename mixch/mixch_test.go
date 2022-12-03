@@ -3,6 +3,7 @@ package mixch
 import (
 	"context"
 	_ "embed"
+	"net/http"
 	"testing"
 )
 
@@ -28,6 +29,10 @@ func (me *FakeNetConn) GetWebPage(ctx context.Context, url string) (string, erro
 }
 func (me *FakeNetConn) Post(ctx context.Context, url string, data map[string]string) (string, error) {
 	return "", nil
+}
+
+func (m *FakeNetConn) GetHttpClient() *http.Client {
+	return nil
 }
 
 func TestLoadUserPage(t *testing.T) {
