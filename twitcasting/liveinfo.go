@@ -31,7 +31,6 @@ func parseStreamInfo(info *Live, text string) error {
 		}
 	}
 	if !info.IsLive {
-		log.Println(text)
 		return inter.ErrNolive
 	}
 	return nil
