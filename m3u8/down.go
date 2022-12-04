@@ -53,10 +53,15 @@ func (d *Downloader) downloadAndWrite(ctx context.Context, m3u8Url string, conn 
 			if seq <= d.downloadedSeq {
 				continue
 			}
-			url := baseurl + "/" + ts.name
+			var url string
+			if strings.HasPrefix(ts.name, "../") {
+				url = baseurl[0:strings.LastIndex(baseurl, "/")] + "/" + ts.name[3:]
+			} else {
+				url = baseurl + "/" + ts.name
+			}
 			data, err := conn.GetFile(ctx, url)
 			if err != nil {
-				return err
+				return fmt.Errorf("err: %w, url: %v", err, url)
 			}
 			tsw.Write(data)
 			d.downloadedSeq = seq
