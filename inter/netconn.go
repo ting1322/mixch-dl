@@ -8,12 +8,7 @@ import (
 	"log"
 	"mime/multipart"
 	"net/http"
-	"net/http/cookiejar"
-	"net/url"
 	"time"
-
-	"github.com/zellyn/kooky"
-	_ "github.com/zellyn/kooky/browser/all" // register cookie store finders!
 )
 
 type INet interface {
@@ -44,21 +39,7 @@ func (m *Net) GetHttpClient() *http.Client {
 func NewNetConn(baseurl string) *Net {
 	net := &Net{}
 
-	// uses registered finders to find cookie store files in default locations
-	// applies the passed filters "Valid", "DomainHasSuffix()" and "Name()" in order to the cookies
-	burl, err := url.Parse(baseurl)
-	if err != nil {
-		log.Fatal("setting cookie, parse base url with error:", err)
-	}
-	cookies := kooky.ReadCookies(kooky.Valid, kooky.DomainHasSuffix(burl.Host))
-	log.Printf("try load cookies from browser, fouund: %v", len(cookies))
-
-	hcookies := make([]*http.Cookie, len(cookies))
-	for idx, c := range cookies {
-		hcookies[idx] = &c.Cookie
-	}
-	net.client.Jar, _ = cookiejar.New(nil)
-	net.client.Jar.SetCookies(burl, hcookies)
+	importCookie(&net.client, baseurl)
 	return net
 }
 
