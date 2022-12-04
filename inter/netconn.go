@@ -23,8 +23,18 @@ type INet interface {
 	GetHttpClient() *http.Client
 }
 
+var (
+	LogNetwork bool = true
+)
+
 type Net struct {
 	client http.Client
+}
+
+func logNetln(v ...any) {
+	if LogNetwork {
+		log.Println(v...)
+	}
 }
 
 func (m *Net) GetHttpClient() *http.Client {
@@ -53,7 +63,7 @@ func NewNetConn(baseurl string) *Net {
 }
 
 func (m Net) Post(ctx context.Context, urltest string, data map[string]string) (string, error) {
-	log.Println("POST:", urltest)
+	logNetln("POST:", urltest)
 	var b bytes.Buffer
 	w := multipart.NewWriter(&b)
 	for k, v := range data {
@@ -76,7 +86,7 @@ func (m Net) GetWebPage(ctx context.Context, url string) (string, error) {
 }
 
 func (m Net) GetFile(ctx context.Context, url string) ([]byte, error) {
-	log.Println("GET:", url)
+	logNetln("GET:", url)
 	req, _ := http.NewRequest("GET", url, nil)
 	return m.DoReq(ctx, req)
 }
@@ -94,7 +104,6 @@ func (m Net) DoReq(ctx context.Context, req *http.Request) ([]byte, error) {
 		log.Printf("http response: %v\n", resp.Status)
 		return nil, errors.New("http response not OK")
 	}
-	//log.Println(resp)
 
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)

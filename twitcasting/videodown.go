@@ -6,14 +6,17 @@ import (
 	"inter"
 	"io"
 	"log"
+	"sync"
 	"time"
 
 	"nhooyr.io/websocket"
 )
 
 type VDown struct {
-	fs   inter.IFs
-	conn inter.INet
+	fs        inter.IFs
+	conn      inter.INet
+	fragCount int64
+	mu        sync.Mutex
 }
 
 func (v *VDown) DownloadMerge(ctx context.Context, netconn inter.INet, wssurl string, filename string) {
@@ -23,6 +26,19 @@ func (v *VDown) DownloadMerge(ctx context.Context, netconn inter.INet, wssurl st
 		inter.FfmpegMerge(tspartFilename, filename+".mp4", true)
 	}
 }
+
+func (v *VDown) GetFragCount() int64 {
+	v.mu.Lock()
+	defer v.mu.Unlock()
+	return v.fragCount
+}
+
+func (v *VDown) incFrag() {
+	v.mu.Lock()
+	v.fragCount++
+	v.mu.Unlock()
+}
+
 func (v *VDown) downloadLoop(ctx context.Context, netconn inter.INet, wssurl, filename string) {
 	writer, err := v.fs.Create(filename)
 	if err != nil {
@@ -38,8 +54,11 @@ func (v *VDown) downloadLoop(ctx context.Context, netconn inter.INet, wssurl, fi
 			return
 		default:
 			err := v.try1(ctx, netconn, wssurl, writer)
-			if err != nil {
+			if ctx.Err() == context.Canceled {
+				fmt.Println()
+			} else if err != nil {
 				retry--
+				fmt.Println()
 				log.Printf("WSS(video) error, retry=%v, %v\n", retry, err)
 				if retry <= 0 {
 					return
@@ -82,6 +101,8 @@ func (v *VDown) try1(ctx context.Context, netconn inter.INet, wssurl string, wri
 				return fmt.Errorf("read websocket: %w", err)
 			}
 
+			v.incFrag()
+			fmt.Printf("\rdownloaded video fragment: %d   ", v.GetFragCount())
 			writer.Write(data)
 		}
 	}

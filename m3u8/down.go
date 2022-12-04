@@ -3,11 +3,13 @@ package m3u8
 import (
 	"context"
 	"errors"
+	"fmt"
 	"inter"
 	"io"
 	"log"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -17,11 +19,25 @@ type Downloader struct {
 	downloadedSeq int
 	timer         *time.Timer
 	m3u8          *M3U8
+	fragCount     int64
+	mu            sync.Mutex
 }
 
-func (sd *Downloader) downloadAndWrite(ctx context.Context, m3u8Url string, conn inter.INet, tsw io.Writer) error {
+func (d *Downloader) GetFragCount() int64 {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	return d.fragCount
+}
+
+func (d *Downloader) incFrag() {
+	d.mu.Lock()
+	d.fragCount++
+	d.mu.Unlock()
+}
+
+func (d *Downloader) downloadAndWrite(ctx context.Context, m3u8Url string, conn inter.INet, tsw io.Writer) error {
 	m3u8, err := downloadM3U8(ctx, m3u8Url, conn)
-	sd.m3u8 = m3u8
+	d.m3u8 = m3u8
 	if err != nil {
 		return err
 	}
@@ -34,7 +50,7 @@ func (sd *Downloader) downloadAndWrite(ctx context.Context, m3u8Url string, conn
 			return errors.New("Cancel")
 		default:
 			seq := m3u8.sequence + idx
-			if seq <= sd.downloadedSeq {
+			if seq <= d.downloadedSeq {
 				continue
 			}
 			url := baseurl + "/" + ts.name
@@ -43,13 +59,14 @@ func (sd *Downloader) downloadAndWrite(ctx context.Context, m3u8Url string, conn
 				return err
 			}
 			tsw.Write(data)
-			sd.downloadedSeq = seq
+			d.downloadedSeq = seq
+			d.incFrag()
 		}
 	}
 	return nil
 }
 
-func (sd *Downloader) downloadMergeLoop(ctx context.Context, m3u8Url string, conn inter.INet, fs inter.IFs, tspartFilename string) {
+func (d *Downloader) downloadMergeLoop(ctx context.Context, m3u8Url string, conn inter.INet, fs inter.IFs, tspartFilename string) {
 	tspart, err := fs.Create(tspartFilename)
 	if err != nil {
 		log.Println("m3u8/downloadMergeLoop", err)
@@ -63,31 +80,37 @@ func (sd *Downloader) downloadMergeLoop(ctx context.Context, m3u8Url string, con
 		case <-ctx.Done():
 			return
 		default:
-			err := sd.downloadAndWrite(ctx, m3u8Url, conn, tspart)
+			err := d.downloadAndWrite(ctx, m3u8Url, conn, tspart)
 			if err == nil {
 				retry = 20
 			} else if err == M3U8FormatError {
-				log.Printf("m3u8 format error, stream end?")
+				fmt.Println()
+				log.Printf("\nm3u8 format error, stream end?")
+				retry = 0
+			} else if ctx.Err() == context.Canceled {
 				retry = 0
 			} else {
-				log.Printf("download with error: %v, retry %v\n", err, retry)
+				fmt.Println()
+				log.Printf("\ndownload with error: %v, retry %v\n", err, retry)
 				retry--
 			}
-			if (sd.m3u8 != nil && sd.m3u8.end) || retry <= 0 {
-				sd.timer.Stop()
-				log.Println("download finish")
+			if (d.m3u8 != nil && d.m3u8.end) || retry <= 0 {
+				d.timer.Stop()
+				fmt.Println()
+				log.Println("\ndownload finish")
 				return
 			}
-			sd.timer.Reset(1500 * time.Millisecond)
-			<-sd.timer.C
+			d.timer.Reset(1500 * time.Millisecond)
+			<-d.timer.C
+			fmt.Printf("\rdownloaded video fragment: %d   ", d.GetFragCount())
 		}
 	}
 }
 
-func (sd *Downloader) DownloadMerge(ctx context.Context, m3u8Url string, conn inter.INet, fs inter.IFs, filename string) {
-	sd.timer = time.NewTimer(2 * time.Second)
+func (d *Downloader) DownloadMerge(ctx context.Context, m3u8Url string, conn inter.INet, fs inter.IFs, filename string) {
+	d.timer = time.NewTimer(2 * time.Second)
 	tspartFilename := filename + ".ts.part"
-	sd.downloadMergeLoop(ctx, m3u8Url, conn, fs, tspartFilename)
+	d.downloadMergeLoop(ctx, m3u8Url, conn, fs, tspartFilename)
 	if fs.Exist(tspartFilename) {
 		inter.FfmpegMerge(tspartFilename, filename+".mp4", false)
 	}

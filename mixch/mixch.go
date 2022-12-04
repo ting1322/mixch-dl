@@ -20,6 +20,7 @@ type Mixch struct {
 	Id       string
 	M3u8Url  string
 	Chat     string
+	vd       *m3u8.Downloader
 }
 
 func New(text string) (*Mixch, error) {
@@ -79,6 +80,8 @@ func (m *Mixch) LoadUserPage(ctx context.Context, conn inter.INet) error {
 		return inter.ErrNolive
 	}
 
+	log.Println("m3u8 url:", m.M3u8Url)
+
 	return nil
 }
 
@@ -94,8 +97,9 @@ func (m *Mixch) Download(ctx context.Context, netconn inter.INet, fio inter.IFs,
 		}()
 	}
 
-	downloader := &m3u8.Downloader{}
-	downloader.DownloadMerge(ctx, m.M3u8Url, netconn, fio, filename)
+	inter.LogNetwork = false
+	m.vd = &m3u8.Downloader{}
+	m.vd.DownloadMerge(ctx, m.M3u8Url, netconn, fio, filename)
 	cancel()
 	if cs != nil {
 		<-cs

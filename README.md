@@ -44,8 +44,19 @@ github 有上傳執行檔給 windows 64-bit, linux 64-bit。
 下載後產生的檔案應該是 mp4 + htm。htm 點開會有聊天室，跟隨影片播放捲動。
 
 如果看到 xxx.ts.part 檔案，表示程式正在執行中，如果沒有在執行，表示剛剛當掉了。
-
 如果程式結束看到 xxx.ts 檔案，表示合併 mp4 的過程失敗，或許是 ffmpeg 沒有裝好。
+這兩個問題可以手動執行 ffmpeg 產生 mp4 檔案
+
+```
+ffmpeg -i xxx.ts -c copy -map 0 -dn -ignore_unknown -movflags +faststart xxx.mp4
+```
+
+如果產生的 mp4 總時間不合理，比如說預期 30 分鐘，但播放軟體顯示 2 小時。
+可以試著用 ffmpeg 去除最前面的一點點，重新設定時間。(twitcasting 經常發生)
+
+```
+ffmpeg -i xxx.ts -c copy -bsf setts=ts=TS-STARTPTS -map 0 -dn -ignore_unknown -ss 1ms -movflags +faststart xxx.mp4
+```
 
 如果程式結束看到 xxx.live_chat.json，這是正常現象。這是聊天是紀錄檔，可以刪掉。
 留著 json 檔案，可以給另一支程式使用：https://github.com/ting1322/chat-player

@@ -23,6 +23,7 @@ type Live struct {
 	VideoUrl string
 	Chat     string
 	MainPage string
+	vd       *VDown
 }
 
 func New(text string) *Live {
@@ -106,11 +107,11 @@ func (m *Live) Download(ctx context.Context, netconn inter.INet, fio inter.IFs, 
 		}()
 	}
 
-	vd := &VDown{
+	m.vd = &VDown{
 		fs:   fio,
 		conn: netconn,
 	}
-	vd.DownloadMerge(ctx, netconn, m.VideoUrl, filename)
+	m.vd.DownloadMerge(ctx, netconn, m.VideoUrl, filename)
 	cancel()
 	if cs != nil {
 		<-cs

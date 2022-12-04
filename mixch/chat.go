@@ -30,17 +30,19 @@ func (chat *Chat) Connect(ctx context.Context, wssUrl string, liveName string) {
 	}
 	defer writer.Close()
 
+	startTime := time.Now()
+
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		default:
-			chat.connectTry1(ctx, wssUrl, writer)
+			chat.connectTry1(ctx, wssUrl, writer, startTime)
 		}
 	}
 }
 
-func (chat *Chat) connectTry1(ctx context.Context, wssUrl string, writer io.Writer) {
+func (chat *Chat) connectTry1(ctx context.Context, wssUrl string, writer io.Writer, startTime time.Time) {
 	ctx2, cancel := context.WithTimeout(ctx, 15*time.Second)
 	log.Println("WSS:", wssUrl)
 	c, _, err := websocket.Dial(ctx2, wssUrl, nil)
@@ -55,8 +57,6 @@ func (chat *Chat) connectTry1(ctx context.Context, wssUrl string, writer io.Writ
 		log.Println("WSS: close")
 	}()
 
-	startTime := time.Now()
-
 	for {
 		select {
 		case <-ctx.Done():
@@ -66,7 +66,9 @@ func (chat *Chat) connectTry1(ctx context.Context, wssUrl string, writer io.Writ
 			ctx2, cancel := context.WithTimeout(ctx, 30*time.Second)
 			_, data, err := c.Read(ctx2)
 			cancel()
-			if err != nil {
+			if ctx.Err() == context.Canceled {
+				return
+			} else if err != nil {
 				log.Println("mixch/chat connectTry1", err)
 				return
 			}

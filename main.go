@@ -48,6 +48,7 @@ need a url as argument, for example:
   mixch-dl https://mixch.tv/u/17209506  18:57
     (wait until 18:57)
 `)
+		return
 	}
 	if len(os.Args) > 2 {
 		t, err := parseTime(os.Args[2])
@@ -86,6 +87,9 @@ need a url as argument, for example:
 		if err != nil {
 			log.Fatal(err)
 		}
+	} else {
+		fmt.Printf("not support url: %v\n", os.Args[1])
+		return
 	}
 
 	sigchan := make(chan os.Signal, 1)
@@ -100,7 +104,7 @@ need a url as argument, for example:
 	for {
 		select {
 		case <-sigchan:
-			log.Println("user cancel")
+			fmt.Printf("\n\nuser cancel\n\n")
 			signal.Reset(os.Interrupt)
 			cancel()
 			log.Println("wait download loop end")
