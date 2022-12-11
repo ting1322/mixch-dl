@@ -3,7 +3,7 @@ package inter
 import (
 	"bytes"
 	"context"
-	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"mime/multipart"
@@ -73,7 +73,7 @@ func (m Net) GetFile(ctx context.Context, url string) ([]byte, error) {
 }
 
 func (m Net) DoReq(ctx context.Context, req *http.Request) ([]byte, error) {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 	req = req.WithContext(ctx)
 	req.Header.Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:106.0) Gecko/20100101 Firefox/106.0")
@@ -83,7 +83,7 @@ func (m Net) DoReq(ctx context.Context, req *http.Request) ([]byte, error) {
 	}
 	if resp.StatusCode != http.StatusOK {
 		log.Printf("http response: %v\n", resp.Status)
-		return nil, errors.New("http response not OK")
+		return nil, fmt.Errorf("%w, Status Code: %v", ErrHttpNotOk, resp.StatusCode)
 	}
 
 	defer resp.Body.Close()

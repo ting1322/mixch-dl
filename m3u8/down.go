@@ -51,7 +51,11 @@ func (d *Downloader) downloadAndWrite(ctx context.Context, m3u8Url string, conn 
 		default:
 			seq := m3u8.sequence + idx
 			if seq <= d.downloadedSeq {
-				continue
+				if seq < d.downloadedSeq - 100 {
+					log.Printf("m3u8 sequence reset, orig:%v, current:%v", d.downloadedSeq, seq)
+				} else {
+					continue
+				}
 			}
 			var url string
 			if strings.HasPrefix(ts.name, "../") {
@@ -88,26 +92,25 @@ func (d *Downloader) downloadMergeLoop(ctx context.Context, m3u8Url string, conn
 			err := d.downloadAndWrite(ctx, m3u8Url, conn, tspart)
 			if err == nil {
 				retry = 20
-			} else if err == M3U8FormatError {
-				fmt.Println()
-				log.Printf("\nm3u8 format error, stream end?")
+				d.timer.Reset(1500 * time.Millisecond)
+			} else if errors.Is(err, M3U8FormatError) || errors.Is(err, inter.ErrHttpNotOk) {
+				log.Printf("stream end? %v\n", err)
 				retry = 0
 			} else if ctx.Err() == context.Canceled {
 				retry = 0
 			} else {
-				fmt.Println()
-				log.Printf("\ndownload with error: %v, retry %v\n", err, retry)
+				log.Printf("download with error: %v, retry %v\n", err, retry)
+				d.timer.Reset(500 * time.Millisecond)
 				retry--
 			}
 			if (d.m3u8 != nil && d.m3u8.end) || retry <= 0 {
 				d.timer.Stop()
 				fmt.Println()
-				log.Println("\ndownload finish")
+				log.Println("download finish")
 				return
 			}
-			d.timer.Reset(1500 * time.Millisecond)
 			<-d.timer.C
-			fmt.Printf("\rdownloaded video fragment: %d   ", d.GetFragCount())
+			//fmt.Printf("\rdownloaded video fragment: %d   ", d.GetFragCount())
 		}
 	}
 }

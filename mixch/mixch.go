@@ -97,7 +97,6 @@ func (m *Mixch) Download(ctx context.Context, netconn inter.INet, fio inter.IFs,
 		}()
 	}
 
-	inter.LogNetwork = false
 	m.vd = &m3u8.Downloader{}
 	m.vd.DownloadMerge(ctx, m.M3u8Url, netconn, fio, filename)
 	cancel()
