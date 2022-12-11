@@ -51,7 +51,7 @@ func (d *Downloader) downloadAndWrite(ctx context.Context, m3u8Url string, conn 
 		default:
 			seq := m3u8.sequence + idx
 			if seq <= d.downloadedSeq {
-				if seq < d.downloadedSeq - 100 {
+				if seq < d.downloadedSeq - 15 {
 					log.Printf("m3u8 sequence reset, orig:%v, current:%v", d.downloadedSeq, seq)
 				} else {
 					continue
