@@ -7,19 +7,47 @@ import (
 	"inter"
 	"io"
 	"log"
-	"nhooyr.io/websocket"
+	"sync"
 	"time"
+
+	"nhooyr.io/websocket"
 )
 
 type Chat struct {
-	Fs   inter.IFs
-	Msgs []Record
+	Fs        inter.IFs
+	startTime time.Time
+	count     int
+	mu        sync.Mutex
 }
 
 type Record struct {
 	Time   time.Time
 	Author string
 	Msg    string
+}
+
+func (chat *Chat) SetTime(t time.Duration) {
+	chat.mu.Lock()
+	chat.startTime = time.Now().Add(-t)
+	chat.mu.Unlock()
+}
+
+func (chat *Chat) getStartTime() time.Time {
+	chat.mu.Lock()
+	defer chat.mu.Unlock()
+	return chat.startTime
+}
+
+func (chat *Chat) Count() int {
+	chat.mu.Lock()
+	defer chat.mu.Unlock()
+	return chat.count
+}
+
+func (chat *Chat) incCount() {
+	chat.mu.Lock()
+	chat.count++
+	chat.mu.Unlock()
 }
 
 func (chat *Chat) Connect(ctx context.Context, wssUrl string, liveName string) {
@@ -30,19 +58,19 @@ func (chat *Chat) Connect(ctx context.Context, wssUrl string, liveName string) {
 	}
 	defer writer.Close()
 
-	startTime := time.Now()
+	chat.SetTime(0)
 
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		default:
-			chat.connectTry1(ctx, wssUrl, writer, startTime)
+			chat.connectTry1(ctx, wssUrl, writer)
 		}
 	}
 }
 
-func (chat *Chat) connectTry1(ctx context.Context, wssUrl string, writer io.Writer, startTime time.Time) {
+func (chat *Chat) connectTry1(ctx context.Context, wssUrl string, writer io.Writer) {
 	ctx2, cancel := context.WithTimeout(ctx, 15*time.Second)
 	log.Println("WSS:", wssUrl)
 	c, _, err := websocket.Dial(ctx2, wssUrl, nil)
@@ -77,12 +105,13 @@ func (chat *Chat) connectTry1(ctx context.Context, wssUrl string, writer io.Writ
 			json.Unmarshal(data, &jsonmap)
 			if kind, exist := jsonmap["kind"]; exist {
 				if kind.(float64) == 0 {
-					msgTime := time.Since(startTime).Milliseconds()
+					msgTime := time.Since(chat.getStartTime()).Milliseconds()
 					name := jsonmap["name"].(string)
 					body := jsonmap["body"].(string)
 					ytc := ConvertToYtChat(msgTime, name, body)
 					writer.Write(ytc)
 					writer.Write([]byte("\n"))
+					chat.incCount()
 				}
 			}
 		}
@@ -91,7 +120,6 @@ func (chat *Chat) connectTry1(ctx context.Context, wssUrl string, writer io.Writ
 }
 
 func ConvertToYtChat(msgTime int64, name, body string) []byte {
-
 	ytmap := jmap{}
 	replayChatItemAction := jmap{}
 	ytmap["replayChatItemAction"] = replayChatItemAction

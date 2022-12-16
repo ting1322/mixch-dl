@@ -97,7 +97,9 @@ func (m *Mixch) Download(ctx context.Context, netconn inter.INet, fio inter.IFs,
 		}()
 	}
 
-	m.vd = &m3u8.Downloader{}
+	m.vd = &m3u8.Downloader{
+		Chat: chat,
+	}
 	m.vd.DownloadMerge(ctx, m.M3u8Url, netconn, fio, filename)
 	cancel()
 	if cs != nil {

@@ -8,7 +8,7 @@ import (
 
 func FfmpegMerge(in, out string, fixts bool) {
 	log.Printf("merge %v file by ffmpeg\n", out)
-	cmdarg := []string {"-i", in, "-c", "copy"}
+	cmdarg := []string{"-i", in, "-c", "copy"}
 	if fixts {
 		cmdarg = append(cmdarg, "-bsf", "setts=ts=TS-STARTPTS")
 	}
