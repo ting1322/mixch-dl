@@ -33,6 +33,9 @@ func parseStreamInfo(info *Live, text string) error {
 	if !info.IsLive {
 		return inter.ErrNolive
 	}
+	if info.wpass != "" && info.VideoUrl != "" {
+		info.VideoUrl += "?word=" + info.wpass
+	}
 	return nil
 }
 

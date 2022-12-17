@@ -24,14 +24,16 @@ type Live struct {
 	Chat     string
 	MainPage string
 	vd       *VDown
+	pass     string // user password text
+	wpass    string // cookie password sent from server
 }
 
-func New(text string) *Live {
+func New(text, pass string) *Live {
 	id := strings.TrimPrefix(text, "https://twitcasting.tv/")
 	if strings.Index(id, "/") > 0 {
 		id = id[0:strings.Index(id, "/")]
 	}
-	live := &Live{MainPage: text, Id: id}
+	live := &Live{MainPage: text, Id: id, pass: pass}
 	return live
 }
 
@@ -66,8 +68,30 @@ func (m *Live) waitLiveLoop(ctx context.Context, conn inter.INet) error {
 }
 
 func (m *Live) LoadUserPage(ctx context.Context, conn inter.INet) error {
+	userInfoUrl := fmt.Sprintf("https://twitcasting.tv/%v", m.Id)
+	webText, err := conn.GetWebPage(ctx, userInfoUrl)
+	if err != nil {
+		return fmt.Errorf("get user page: %w", err)
+	}
+
+	if strings.Contains(webText, `<input type="text" name="password" value="">`) {
+		if m.pass == "" {
+			return errors.New("password word is required")
+		}
+		postData := make(map[string]string)
+		postData["password"] = m.pass
+		webText, err = conn.Post(ctx, userInfoUrl,postData)
+		if err != nil {
+			return fmt.Errorf("submit password: %w", err)
+		}
+		m.wpass, err = conn.GetCookie("wpass", "https://twitcasting.tv", "/" + m.Id)
+		if err != nil {
+			return fmt.Errorf("get password: %w", err)
+		}
+	}
+
 	videoInfoUrl := fmt.Sprintf("https://twitcasting.tv/streamserver.php?target=%v&mode=client", m.Id)
-	webText, err := conn.GetWebPage(ctx, videoInfoUrl)
+	webText, err = conn.GetWebPage(ctx, videoInfoUrl)
 	if err != nil {
 		return fmt.Errorf("get video info: %w", err)
 	}
@@ -80,6 +104,10 @@ func (m *Live) LoadUserPage(ctx context.Context, conn inter.INet) error {
 
 	pdata := make(map[string]string)
 	pdata["movie_id"] = m.MovieId
+	if m.wpass != "" {
+		pdata["password"] = m.wpass
+		log.Println("use password:", m.wpass)
+	}
 	webText, err = conn.Post(ctx, "https://twitcasting.tv/eventpubsuburl.php", pdata)
 	if err != nil {
 		return fmt.Errorf("get chat info: %w", err)

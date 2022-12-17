@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"inter"
 	"log"
@@ -17,6 +18,7 @@ var (
 	downloader *m3u8.Downloader = &m3u8.Downloader{}
 	fio        inter.IFs        = &inter.Fs{}
 	netconn    inter.INet
+	pass       string
 )
 
 func parseTime(text string) (time.Time, error) {
@@ -34,9 +36,11 @@ func parseTime(text string) (time.Time, error) {
 }
 
 func main() {
+	flag.StringVar(&pass, "pass", "", "password for twitcasting")
+	flag.Parse()
 	var url string
-	if len(os.Args) > 1 {
-		url = os.Args[1]
+	if flag.NArg() > 0 {
+		url = flag.Arg(0)
 	} else {
 		log.Printf(`
 need a url as argument, for example:
@@ -47,13 +51,19 @@ need a url as argument, for example:
 
   mixch-dl https://mixch.tv/u/17209506  18:57
     (wait until 18:57)
+
+  mixch-dl https://twitcasting.tv/quon01tama
+    (twitcasting experimental support, download fmp4 via websocket)
+
+  mixch-dl -pass THE_PASSWORD https://twitcasting.tv/quon01tama
+    (twitcasting with password)
 `)
 		return
 	}
-	if len(os.Args) > 2 {
-		t, err := parseTime(os.Args[2])
+	if flag.NArg() > 1 {
+		t, err := parseTime(flag.Arg(1))
 		if err != nil {
-			log.Fatal("time format error", os.Args[2], err)
+			log.Fatal("time format error", flag.Arg(1), err)
 		}
 		fmt.Printf("wait until %v, (%ds)", t, int(t.Sub(time.Now().Local()).Seconds()))
 		timer := time.NewTimer(5 * time.Second)
@@ -82,7 +92,7 @@ need a url as argument, for example:
 	} else if twitcasting.Support(url) {
 		netconn = inter.NewNetConn(url)
 		filename = fmt.Sprintf("twitcasting-%v", time.Now().Local().Format("2006-01-02-15-04"))
-		live = twitcasting.New(url)
+		live = twitcasting.New(url, pass)
 		err := live.WaitStreamStart(ctx, netconn)
 		if err != nil {
 			log.Fatal(err)

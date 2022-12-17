@@ -3,11 +3,13 @@ package inter
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"mime/multipart"
 	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -16,6 +18,7 @@ type INet interface {
 	GetFile(ctx context.Context, url string) ([]byte, error)
 	Post(ctx context.Context, url string, data map[string]string) (string, error)
 	GetHttpClient() *http.Client
+	GetCookie(name, domain, path string) (string, error)
 }
 
 var (
@@ -70,6 +73,19 @@ func (m Net) GetFile(ctx context.Context, url string) ([]byte, error) {
 	logNetln("GET:", url)
 	req, _ := http.NewRequest("GET", url, nil)
 	return m.DoReq(ctx, req)
+}
+
+func (m *Net) GetCookie(name, domain, path string) (string, error) {
+	urlText, err := url.Parse(domain + path)
+	if err != nil {
+		return "", fmt.Errorf("get cookie: %w", err)
+	}
+	for _, cookie := range m.client.Jar.Cookies(urlText) {
+		if cookie.Name == name {
+			return cookie.Value, nil
+		}
+	}
+	return "", errors.New("not found cookie")
 }
 
 func (m Net) DoReq(ctx context.Context, req *http.Request) ([]byte, error) {

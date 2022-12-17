@@ -16,7 +16,7 @@ type Chat struct {
 	Fs inter.IFs
 }
 
-func (c *Chat) Connect(ctx context.Context, netconn inter.INet, wssurl string, filename string) {
+func (c *Chat) Connect(ctx context.Context, netconn inter.INet, wssurl, filename string) {
 	writer, err := c.Fs.Create(filename + ".live_chat.json")
 	if err != nil {
 		log.Println(err)
