@@ -34,6 +34,10 @@ func (m *FakeNetConn) GetHttpClient() *http.Client {
 	return nil
 }
 
+func (m *FakeNetConn) GetCookie(name, domain, path string) (string, error) {
+	return "", nil
+}
+
 func TestDownloadM3U8(t *testing.T) {
 	conn := &FakeNetConn{}
 	conn.content = m3u8Text

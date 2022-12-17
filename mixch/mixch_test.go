@@ -35,6 +35,10 @@ func (m *FakeNetConn) GetHttpClient() *http.Client {
 	return nil
 }
 
+func (m *FakeNetConn) GetCookie(name, domain, path string) (string, error) {
+	return "", nil
+}
+
 func TestLoadUserPage(t *testing.T) {
 	mixch := Mixch{}
 	conn := &FakeNetConn{}
