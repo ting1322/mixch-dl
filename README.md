@@ -21,6 +21,9 @@ mixch-dl.exe https://mixch.tv/u/1234567/live 18:58
 
 # twitcasting 的網址也有機會抓到，但影片經常會缺失片段
 mixch-dl https://twitcasting.tv/c:annuuuu_cas
+
+# twitcasting 需要密碼可以用 -pass 指定密碼
+mixch-dl -pass THE_PASSWORD https://twitcasting.tv/quon01tama
 ```
 
 # 編譯
