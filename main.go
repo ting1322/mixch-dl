@@ -79,7 +79,6 @@ need a url as argument, for example:
 	var live inter.Live
 	if mixch.Support(url) {
 		netconn = inter.NewNetConn(url)
-		filename = fmt.Sprintf("mixch-%v", time.Now().Local().Format("2006-01-02-15-04"))
 		var err error
 		live, err = mixch.New(url)
 		if err != nil {
@@ -89,14 +88,15 @@ need a url as argument, for example:
 		if err != nil {
 			log.Fatal(err)
 		}
+		filename = fmt.Sprintf("mixch-%v", time.Now().Local().Format("2006-01-02-15-04"))
 	} else if twitcasting.Support(url) {
 		netconn = inter.NewNetConn(url)
-		filename = fmt.Sprintf("twitcasting-%v", time.Now().Local().Format("2006-01-02-15-04"))
 		live = twitcasting.New(url, pass)
 		err := live.WaitStreamStart(ctx, netconn)
 		if err != nil {
 			log.Fatal(err)
 		}
+		filename = fmt.Sprintf("twitcasting-%v", time.Now().Local().Format("2006-01-02-15-04"))
 	} else {
 		fmt.Printf("not support url: %v\n", os.Args[1])
 		return
