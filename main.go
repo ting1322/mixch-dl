@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"inter"
@@ -19,6 +20,7 @@ var (
 	fio        inter.IFs        = &inter.Fs{}
 	netconn    inter.INet
 	pass       string
+	loopAtFinish      bool
 )
 
 func parseTime(text string) (time.Time, error) {
@@ -37,6 +39,7 @@ func parseTime(text string) (time.Time, error) {
 
 func main() {
 	flag.StringVar(&pass, "pass", "", "password for twitcasting")
+	flag.BoolVar(&loopAtFinish, "loop", false, "continue run even if download finish")
 	flag.Parse()
 	var url string
 	if flag.NArg() > 0 {
@@ -73,6 +76,16 @@ need a url as argument, for example:
 			fmt.Printf("\rwait until %v, (%ds)", t, int(t.Sub(time.Now().Local()).Seconds()))
 		}
 	}
+
+	for {
+		err := downloadFlow(url) 
+		if err != nil || !loopAtFinish {
+			break
+		}
+	}
+}
+
+func downloadFlow(url string) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	var filename string
@@ -99,7 +112,7 @@ need a url as argument, for example:
 		filename = fmt.Sprintf("twitcasting-%v", time.Now().Local().Format("2006-01-02-15-04"))
 	} else {
 		fmt.Printf("not support url: %v\n", os.Args[1])
-		return
+		return errors.New("not support url")
 	}
 
 	sigchan := make(chan os.Signal, 1)
@@ -119,10 +132,10 @@ need a url as argument, for example:
 			cancel()
 			log.Println("wait download loop end")
 			<-ds
-			return
+			return errors.New("user cancel")
 		case <-ds:
 			log.Println("download loop end")
-			return
+			return nil
 		default:
 			time.Sleep(time.Duration(1) * time.Second)
 		}
