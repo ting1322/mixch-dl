@@ -16,11 +16,12 @@ import (
 )
 
 var (
-	downloader   *m3u8.Downloader = &m3u8.Downloader{}
-	fio          inter.IFs        = &inter.Fs{}
-	netconn      inter.INet
-	pass         string
-	loopAtFinish bool
+	programVersion string           = "1.x.x-custombuild"
+	downloader     *m3u8.Downloader = &m3u8.Downloader{}
+	fio            inter.IFs        = &inter.Fs{}
+	netconn        inter.INet
+	pass           string
+	loopAtFinish   bool
 )
 
 func parseTime(text string) (time.Time, error) {
@@ -38,9 +39,15 @@ func parseTime(text string) (time.Time, error) {
 }
 
 func main() {
+	var argVersion bool
 	flag.StringVar(&pass, "pass", "", "password for twitcasting")
 	flag.BoolVar(&loopAtFinish, "loop", false, "continue run even if download finish")
+	flag.BoolVar(&argVersion, "version", false, "show program version and exit.")
 	flag.Parse()
+	if argVersion {
+		fmt.Println("mixch-dl", programVersion)
+		return
+	}
 	var url string
 	if flag.NArg() > 0 {
 		url = flag.Arg(0)
