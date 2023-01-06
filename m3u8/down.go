@@ -129,7 +129,11 @@ func (d *Downloader) DownloadMerge(ctx context.Context, m3u8Url string, conn int
 	tspartFilename := filename + ".ts.part"
 	d.downloadMergeLoop(ctx, m3u8Url, conn, fs, tspartFilename)
 	if fs.Exist(tspartFilename) {
-		inter.FfmpegMerge(tspartFilename, filename+".mp4", false)
+		if d.GetFragCount() == 0 {
+			fs.Delete(tspartFilename)
+		} else {
+			inter.FfmpegMerge(tspartFilename, filename+".mp4", false)
+		}
 	}
 }
 

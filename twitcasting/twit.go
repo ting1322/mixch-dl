@@ -80,11 +80,11 @@ func (m *Live) LoadUserPage(ctx context.Context, conn inter.INet) error {
 		}
 		postData := make(map[string]string)
 		postData["password"] = m.pass
-		webText, err = conn.Post(ctx, userInfoUrl,postData)
+		webText, err = conn.Post(ctx, userInfoUrl, postData)
 		if err != nil {
 			return fmt.Errorf("submit password: %w", err)
 		}
-		m.wpass, err = conn.GetCookie("wpass", "https://twitcasting.tv", "/" + m.Id)
+		m.wpass, err = conn.GetCookie("wpass", "https://twitcasting.tv", "/"+m.Id)
 		if err != nil {
 			return fmt.Errorf("get password: %w", err)
 		}
@@ -123,7 +123,7 @@ func (m *Live) LoadUserPage(ctx context.Context, conn inter.INet) error {
 	return nil
 }
 
-func (m *Live) Download(ctx context.Context, netconn inter.INet, fio inter.IFs, filename string) {
+func (m *Live) Download(ctx context.Context, netconn inter.INet, fio inter.IFs, filename string) error {
 	ctx2, cancel := context.WithCancel(ctx)
 	chat := &Chat{Fs: fio}
 	var cs chan int
@@ -145,6 +145,7 @@ func (m *Live) Download(ctx context.Context, netconn inter.INet, fio inter.IFs, 
 		<-cs
 	}
 	generateHtml(filename + ".mp4")
+	return nil
 }
 
 func generateHtml(mp4 string) {

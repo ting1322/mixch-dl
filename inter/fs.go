@@ -10,6 +10,7 @@ type IFs interface {
 	Save(filename string, data []byte) error
 	Exist(filename string) bool
 	Create(filename string) (io.WriteCloser, error)
+	Delete(filename string)
 }
 
 type Fs struct {
@@ -37,4 +38,9 @@ func (me Fs) Exist(filename string) bool {
 func (me Fs) Create(filename string) (io.WriteCloser, error) {
 	log.Println("CREATE:", filename)
 	return os.Create(filename)
+}
+
+func (me Fs) Delete(filename string) {
+	log.Println("DELETE:", filename)
+	os.Remove(filename)
 }

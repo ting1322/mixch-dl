@@ -85,7 +85,7 @@ func (m *Mixch) LoadUserPage(ctx context.Context, conn inter.INet) error {
 	return nil
 }
 
-func (m *Mixch) Download(ctx context.Context, netconn inter.INet, fio inter.IFs, filename string) {
+func (m *Mixch) Download(ctx context.Context, netconn inter.INet, fio inter.IFs, filename string) error {
 	ctx2, cancel := context.WithCancel(ctx)
 	chat := &Chat{Fs: fio}
 	var cs chan int
@@ -105,7 +105,12 @@ func (m *Mixch) Download(ctx context.Context, netconn inter.INet, fio inter.IFs,
 	if cs != nil {
 		<-cs
 	}
-	generateHtml(filename + ".mp4")
+	if m.vd.GetFragCount() == 0 {
+		return inter.ErrNolive
+	} else {
+		generateHtml(filename + ".mp4")
+		return nil
+	}
 }
 
 func generateHtml(mp4 string) {

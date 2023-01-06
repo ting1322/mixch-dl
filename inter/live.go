@@ -4,5 +4,5 @@ import "context"
 
 type Live interface {
 	WaitStreamStart(ctx context.Context, conn INet) error
-	Download(ctx context.Context, netconn INet, fio IFs, filename string)
+	Download(ctx context.Context, netconn INet, fio IFs, filename string) error
 }

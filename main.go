@@ -16,11 +16,11 @@ import (
 )
 
 var (
-	downloader *m3u8.Downloader = &m3u8.Downloader{}
-	fio        inter.IFs        = &inter.Fs{}
-	netconn    inter.INet
-	pass       string
-	loopAtFinish      bool
+	downloader   *m3u8.Downloader = &m3u8.Downloader{}
+	fio          inter.IFs        = &inter.Fs{}
+	netconn      inter.INet
+	pass         string
+	loopAtFinish bool
 )
 
 func parseTime(text string) (time.Time, error) {
@@ -78,8 +78,17 @@ need a url as argument, for example:
 	}
 
 	for {
-		err := downloadFlow(url) 
-		if err != nil || !loopAtFinish {
+		err := downloadFlow(url)
+		if err == inter.ErrNolive {
+			// mixch sometimes response HTTP 403 even if live was started.
+			// downloadFlow will return ErrNoLive in this case.
+			// we need try again, until any video fragment has been download.
+			continue
+		}
+		if err != nil {
+			break
+		}
+		if !loopAtFinish {
 			break
 		}
 	}
