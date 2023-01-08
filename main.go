@@ -26,7 +26,7 @@ var (
 
 func parseTime(text string) (time.Time, error) {
 	now := time.Now().Local()
-	t, err := time.ParseInLocation("15:04", os.Args[2], time.Now().Location())
+	t, err := time.ParseInLocation("15:04", text, time.Now().Location())
 	if err == nil {
 		y, m, d := now.Date()
 		t = t.AddDate(y, int(m)-1, d-1)
