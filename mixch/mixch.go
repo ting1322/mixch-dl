@@ -42,7 +42,8 @@ func New(text string) (*Mixch, error) {
 func (m *Mixch) WaitStreamStart(ctx context.Context, conn inter.INet) error {
 	err := m.LoadUserPage(ctx, conn)
 	if errors.Is(err, inter.ErrNolive) {
-		err = m.waitLiveLoop(ctx, conn)
+		log.Println("wait stream start......")
+		err = m.waitLiveLoop(ctx, 30 * time.Second, conn)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -52,10 +53,9 @@ func (m *Mixch) WaitStreamStart(ctx context.Context, conn inter.INet) error {
 	return nil
 }
 
-func (m *Mixch) waitLiveLoop(ctx context.Context, conn inter.INet) error {
-	timer := time.NewTimer(30 * time.Second)
+func (m *Mixch) waitLiveLoop(ctx context.Context, interval time.Duration, conn inter.INet) error {
+	timer := time.NewTimer(interval)
 	for {
-		log.Println("no live, retry after 30s")
 		<-timer.C
 		err := m.LoadUserPage(ctx, conn)
 		if err == nil {
@@ -65,7 +65,7 @@ func (m *Mixch) waitLiveLoop(ctx context.Context, conn inter.INet) error {
 		if !errors.Is(err, inter.ErrNolive) {
 			return fmt.Errorf("wait live start: %w", err)
 		}
-		timer.Reset(30 * time.Second)
+		timer.Reset(interval)
 	}
 }
 

@@ -29,6 +29,7 @@ require (
 	github.com/gonuts/binary v0.2.0 // indirect
 	github.com/keybase/go-keychain v0.0.0-20220408132150-ad3b4a8fd4a7 // indirect
 	github.com/klauspost/compress v1.10.3 // indirect
+	github.com/mattn/go-isatty v0.0.17 // indirect
 	github.com/ting1322/chat-player/pkg/cplayer v0.0.0-20221201150455-8fe9771fe856 // indirect
 	github.com/zalando/go-keyring v0.2.1 // indirect
 	github.com/zellyn/kooky v0.0.0-20221025221128-3e66d684c4db // indirect

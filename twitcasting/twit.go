@@ -40,7 +40,8 @@ func New(text, pass string) *Live {
 func (m *Live) WaitStreamStart(ctx context.Context, conn inter.INet) error {
 	err := m.LoadUserPage(ctx, conn)
 	if errors.Is(err, inter.ErrNolive) {
-		err = m.waitLiveLoop(ctx, conn)
+		log.Println("wait stream start......")
+		err = m.waitLiveLoop(ctx, 10 * time.Second, conn)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -50,10 +51,9 @@ func (m *Live) WaitStreamStart(ctx context.Context, conn inter.INet) error {
 	return nil
 }
 
-func (m *Live) waitLiveLoop(ctx context.Context, conn inter.INet) error {
-	timer := time.NewTimer(30 * time.Second)
+func (m *Live) waitLiveLoop(ctx context.Context, interval time.Duration, conn inter.INet) error {
+	timer := time.NewTimer(interval)
 	for {
-		log.Println("no live, retry after 10s")
 		<-timer.C
 		err := m.LoadUserPage(ctx, conn)
 		if err == nil {
@@ -63,7 +63,7 @@ func (m *Live) waitLiveLoop(ctx context.Context, conn inter.INet) error {
 		if !errors.Is(err, inter.ErrNolive) {
 			return fmt.Errorf("wait live start: %w", err)
 		}
-		timer.Reset(10 * time.Second)
+		timer.Reset(interval)
 	}
 }
 

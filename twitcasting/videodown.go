@@ -102,7 +102,8 @@ func (v *VDown) try1(ctx context.Context, netconn inter.INet, wssurl string, wri
 			}
 
 			v.incFrag()
-			fmt.Printf("\rdownloaded video fragment: %d   ", v.GetFragCount())
+			inter.DeletePreviousLine()
+			fmt.Printf("downloaded video fragment: %d\n", v.GetFragCount())
 			writer.Write(data)
 		}
 	}
