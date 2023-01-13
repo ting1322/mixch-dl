@@ -30,6 +30,9 @@ func (me *FakeNetConn) GetWebPage(ctx context.Context, url string) (string, erro
 func (me *FakeNetConn) Post(ctx context.Context, url string, data map[string]string) (string, error) {
 	return "", nil
 }
+func (me *FakeNetConn) PostForm(ctx context.Context, url string, data map[string]string) (string, error) {
+	return "", nil
+}
 
 func (m *FakeNetConn) GetHttpClient() *http.Client {
 	return nil

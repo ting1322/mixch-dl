@@ -4,11 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/ting1322/chat-player/pkg/cplayer"
 	"inter"
 	"log"
+	"net/url"
+	"regexp"
 	"strings"
 	"time"
+
+	"github.com/ting1322/chat-player/pkg/cplayer"
 )
 
 type jmap = map[string]any
@@ -41,7 +44,7 @@ func (m *Live) WaitStreamStart(ctx context.Context, conn inter.INet) error {
 	err := m.LoadUserPage(ctx, conn)
 	if errors.Is(err, inter.ErrNolive) {
 		log.Println("wait stream start......")
-		err = m.waitLiveLoop(ctx, 10 * time.Second, conn)
+		err = m.waitLiveLoop(ctx, 10*time.Second, conn)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -79,7 +82,12 @@ func (m *Live) LoadUserPage(ctx context.Context, conn inter.INet) error {
 			return errors.New("password word is required")
 		}
 		postData := make(map[string]string)
-		postData["password"] = m.pass
+		postData["password"] = url.QueryEscape(m.pass)
+		re, err := regexp.Compile(`<input type="hidden" name="cs_session_id" value="(\w+)">`)
+		mgroup := re.FindStringSubmatch(webText)
+		if mgroup != nil {
+			postData["cs_session_id"] = mgroup[1]
+		}
 		webText, err = conn.Post(ctx, userInfoUrl, postData)
 		if err != nil {
 			return fmt.Errorf("submit password: %w", err)
@@ -108,7 +116,7 @@ func (m *Live) LoadUserPage(ctx context.Context, conn inter.INet) error {
 		pdata["password"] = m.wpass
 		log.Println("use password:", m.wpass)
 	}
-	webText, err = conn.Post(ctx, "https://twitcasting.tv/eventpubsuburl.php", pdata)
+	webText, err = conn.PostForm(ctx, "https://twitcasting.tv/eventpubsuburl.php", pdata)
 	if err != nil {
 		return fmt.Errorf("get chat info: %w", err)
 	}

@@ -1,6 +1,7 @@
 package inter
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"errors"
@@ -16,6 +17,7 @@ import (
 type INet interface {
 	GetWebPage(ctx context.Context, url string) (string, error)
 	GetFile(ctx context.Context, url string) ([]byte, error)
+	PostForm(ctx context.Context, url string, data map[string]string) (string, error)
 	Post(ctx context.Context, url string, data map[string]string) (string, error)
 	GetHttpClient() *http.Client
 	GetCookie(name, domain, path string) (string, error)
@@ -48,6 +50,27 @@ func NewNetConn(baseurl string) *Net {
 
 func (m Net) Post(ctx context.Context, urltest string, data map[string]string) (string, error) {
 	logNetln("POST:", urltest)
+	var b bytes.Buffer
+	buffer := bufio.NewWriter(&b)
+	first := true
+	for k, v := range data {
+		if !first {
+			buffer.WriteString("&")
+		}
+		first = false
+		buffer.WriteString(k)
+		buffer.WriteString("=")
+		buffer.WriteString(v)
+	}
+	buffer.Flush()
+	req, _ := http.NewRequest(http.MethodPost, urltest, &b)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	resp, err := m.DoReq(ctx, req)
+	return string(resp), err
+}
+
+func (m Net) PostForm(ctx context.Context, urltest string, data map[string]string) (string, error) {
+	logNetln("POST-FORM:", urltest)
 	var b bytes.Buffer
 	w := multipart.NewWriter(&b)
 	for k, v := range data {
