@@ -2,8 +2,12 @@ package inter
 
 import (
 	"log"
+	"math"
 	"os"
 	"os/exec"
+	"strconv"
+	"strings"
+	"time"
 )
 
 func FfmpegMerge(in, out string, fixts bool) {
@@ -24,4 +28,25 @@ func FfmpegMerge(in, out string, fixts bool) {
 		os.Remove(in)
 		//os.Rename(in, in[:len(in)-5])
 	}
+}
+
+func FfprobeTime(filename string) (time.Duration, error) {
+	cmdarg := []string{"-v", "error",
+		"-show_entries", "format=duration", "-of",
+		"default=noprint_wrappers=1:nokey=1", filename}
+	var cmd *exec.Cmd = exec.Command("ffprobe", cmdarg...)
+	log.Println(cmd)
+	outData, err := cmd.Output()
+	text := strings.Trim(string(outData), " \r\n")
+	log.Println("FFPROBE:", text)
+	if err != nil {
+		return 0, err
+	}
+	durationFloat, err := strconv.ParseFloat(text, 64)
+	if err != nil {
+		log.Println("FFPROBE ERR:", err)
+		return 0, err
+	}
+	var duration int = int(math.Round(durationFloat))
+	return time.Duration(duration) * time.Second, nil
 }

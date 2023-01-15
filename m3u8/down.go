@@ -7,6 +7,7 @@ import (
 	"inter"
 	"io"
 	"log"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -16,13 +17,16 @@ import (
 var M3U8FormatError error = errors.New("m3u8 format error")
 
 type Downloader struct {
-	seq       int
-	timer     *time.Timer
-	m3u8      *M3U8
-	fragCount int64
-	totalTime time.Duration
-	Chat      ChatDownloader
-	mu        sync.Mutex
+	seq            int
+	timer          *time.Timer
+	m3u8           *M3U8
+	fragCount      int64
+	totalTime      time.Duration
+	Chat           ChatDownloader
+	mu             sync.Mutex
+	conn           inter.INet
+	fs             inter.IFs
+	tspartFilename string
 }
 
 func (d *Downloader) GetFragCount() int64 {
@@ -37,14 +41,57 @@ func (d *Downloader) incFrag() {
 	d.mu.Unlock()
 }
 
-func (d *Downloader) downloadAndWrite(ctx context.Context, m3u8Url string, conn inter.INet, tsw io.Writer) error {
-	m3u8, err := downloadM3U8(ctx, m3u8Url, conn)
+func (d *Downloader) tryDownloadLostFrag(ctx context.Context, tsw io.Writer, baseurl, prefix string, curIdx int) {
+	startIdx := curIdx - 6
+	if startIdx < 0 {
+		startIdx = 0
+	}
+	log.Printf("REMEDY: downloaded video number:%v, current video number:%v, download:%v-%v\n", d.seq, curIdx, startIdx, curIdx-1)
+	workList := make([]*DownloadWorker, 0)
+	for i := startIdx; i < curIdx; i++ {
+		url := fmt.Sprintf("%v/%v%v.ts", baseurl, prefix, i)
+		w := NewWorker(url)
+		workList = append(workList, w)
+		go w.run(ctx, d.conn)
+	}
+	var successCount int = 0
+	var failCount int = 0
+	for _, w := range workList {
+		result := <-w.complete
+		if result.err == nil {
+			tsw.Write(result.data)
+			d.incFrag()
+			successCount++
+		} else {
+			log.Println("frag fail:", w.url)
+			failCount++
+		}
+	}
+	t, err := inter.FfprobeTime(d.tspartFilename)
+	if err == nil {
+		d.totalTime = t
+	}
+	d.seq = curIdx - 1
+	log.Printf("REMEDY: success:%v, fail:%v, currentTime:%v\n", successCount, failCount, d.totalTime)
+}
+
+func (d *Downloader) downloadAndWrite(ctx context.Context, m3u8Url string, tsw io.Writer) error {
+	m3u8, err := downloadM3U8(ctx, m3u8Url, d.conn)
 	d.m3u8 = m3u8
 	if err != nil {
 		return err
 	}
 
 	baseurl := m3u8Url[0:strings.LastIndex(m3u8Url, "/")]
+
+	if m3u8.sequence > d.seq && len(m3u8.tsList) > 0 {
+		re, _ := regexp.Compile(`(.+-)(\d+)\.ts$`)
+		m := re.FindStringSubmatch(d.m3u8.tsList[0].name)
+		curIdx, err := strconv.Atoi(m[2])
+		if err == nil {
+			d.tryDownloadLostFrag(ctx, tsw, baseurl, m[1], curIdx)
+		}
+	}
 
 	for idx, ts := range m3u8.tsList {
 		select {
@@ -65,7 +112,7 @@ func (d *Downloader) downloadAndWrite(ctx context.Context, m3u8Url string, conn 
 			} else {
 				url = baseurl + "/" + ts.name
 			}
-			data, err := conn.GetFile(ctx, url)
+			data, err := d.conn.GetFile(ctx, url)
 			if err != nil {
 				return fmt.Errorf("err: %w, url: %v", err, url)
 			}
@@ -82,8 +129,8 @@ func (d *Downloader) downloadAndWrite(ctx context.Context, m3u8Url string, conn 
 	return nil
 }
 
-func (d *Downloader) downloadMergeLoop(ctx context.Context, m3u8Url string, conn inter.INet, fs inter.IFs, tspartFilename string) {
-	tspart, err := fs.Create(tspartFilename)
+func (d *Downloader) downloadMergeLoop(ctx context.Context, m3u8Url string) {
+	tspart, err := d.fs.Create(d.tspartFilename)
 	if err != nil {
 		log.Println("m3u8/downloadMergeLoop", err)
 		return
@@ -96,7 +143,7 @@ func (d *Downloader) downloadMergeLoop(ctx context.Context, m3u8Url string, conn
 		case <-ctx.Done():
 			return
 		default:
-			err := d.downloadAndWrite(ctx, m3u8Url, conn, tspart)
+			err := d.downloadAndWrite(ctx, m3u8Url, tspart)
 			if err == nil {
 				retry = 30
 				d.timer.Reset(1500 * time.Millisecond)
@@ -126,13 +173,15 @@ func (d *Downloader) downloadMergeLoop(ctx context.Context, m3u8Url string, conn
 
 func (d *Downloader) DownloadMerge(ctx context.Context, m3u8Url string, conn inter.INet, fs inter.IFs, filename string) {
 	d.timer = time.NewTimer(2 * time.Second)
-	tspartFilename := filename + ".ts.part"
-	d.downloadMergeLoop(ctx, m3u8Url, conn, fs, tspartFilename)
-	if fs.Exist(tspartFilename) {
+	d.conn = conn
+	d.fs = fs
+	d.tspartFilename = filename + ".ts.part"
+	d.downloadMergeLoop(ctx, m3u8Url)
+	if fs.Exist(d.tspartFilename) {
 		if d.GetFragCount() == 0 {
-			fs.Delete(tspartFilename)
+			fs.Delete(d.tspartFilename)
 		} else {
-			inter.FfmpegMerge(tspartFilename, filename+".mp4", false)
+			inter.FfmpegMerge(d.tspartFilename, filename+".mp4", false)
 		}
 	}
 }

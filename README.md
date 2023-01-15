@@ -8,6 +8,7 @@
 第二個參數可省略，會立刻開始執行。
 
 ffmpeg 必須事先裝好，合併檔案需要 ffmpeg。
+ffmpeg 通常會附贈 ffprobe，這個也需要。用來查詢影片時間，以便同步聊天室時間軸。
 
 ```
 # 立刻開始下載影片
@@ -24,6 +25,9 @@ mixch-dl https://twitcasting.tv/c:annuuuu_cas
 
 # twitcasting 需要密碼可以用 -pass 指定密碼
 mixch-dl -pass THE_PASSWORD https://twitcasting.tv/quon01tama
+
+# 查看目前程式版本
+mixch-dl -version
 ```
 
 # 編譯
@@ -40,9 +44,13 @@ github 有上傳執行檔給 windows 64-bit, linux 64-bit。
 
 如果不需要聊天室，請優先考慮使用 yt-dlp，那邊比較穩。
 
+## 控制
+
 下載中隨時可以按 Ctrl-C 中斷，收到訊號我會試著結束下載，
 並把已經下載的檔案用 ffmpeg 轉為 mp4。
 如果按第二次 Ctrl-C，會強制結束程式。
+
+## 輸出檔案
 
 下載後產生的檔案應該是 mp4 + htm。htm 點開會有聊天室，跟隨影片播放捲動。
 
@@ -64,14 +72,56 @@ ffmpeg -i xxx.ts -c copy -bsf setts=ts=TS-STARTPTS -map 0 -dn -ignore_unknown -s
 如果程式結束看到 xxx.live_chat.json，這是正常現象。這是聊天是紀錄檔，可以刪掉。
 留著 json 檔案，可以給另一支程式使用：https://github.com/ting1322/chat-player
 
-如果執行的當下，指定的網址並沒有直播，會每隔 30 秒連一次網路，直到直播開始。
+## 行為
+
+### 網路
+
+如果執行的當下，指定的網址並沒有直播，會每隔 15 秒連一次網路，直到直播開始。
 如果知道大概的開台時間，推薦使用第二個參數設定時間，節省網路資源。
+
+### cookie
 
 cookie 的部份，會試著從瀏覽器抓。如果 firefox + chrome 同時都有登入的狀況，
 似乎會抓到多個相同的 cookie？這我不太確定，如果怪怪的，建議只保留一個瀏覽器
 是登入狀態，其他瀏覽器的 cookie 都清掉。
 
+### mixch
+
+mixch 的影片網址都類似下面這樣的格式:
+```
+https://d2ibghk7591fzs.cloudfront.net/hls/torte_u_17347373_s_17204820-5173.ts
+https://d2ibghk7591fzs.cloudfront.net/hls/torte_u_17347373_s_17204820-5174.ts
+```
+m3u8 裡面只會有最新的兩個片段，每個片段 2 秒。
+我們可以試著把數字往回推，猜測 m3u8 沒有給的更早的網址。但是伺服器那邊只會允許
+往回抓 2 ~ 5 個片段，更往前會回應 403 錯誤。
+
+### twitcasting
+
+這邊的影片並不是 m3u8，而是使用 WebSocket 連線，伺服器會不斷的送影片資料過來。
+只要把全部的資料寫入一個檔案，就可以丟給 ffmpeg 轉成 mp4。
+但這也意味著我們只能連線上去，被動的等伺服器送資料過來。而不能像 mixch 一樣猜測
+網址試著往回頭抓前面幾秒的影片。
+
+# 建議
+
+如果知道大概的開台時間，推薦使用第二個參數設定時間，節省網路資源。
+例如知道下午六點開台，可以指定程式從 18:00 開始試著連接網路
+```
+mixch-dl.exe https://mixch.tv/u/1234567/live 18:58
+```
+
+預設狀況，成功的下載一個影片之後，程式將會結束。如果直播中間短暫的關台，
+然後又再次開始直播，後半場可能就抓不到了。這種狀況建議使用參數 `-loop`
+這會讓程式無限的執行，一個直播結束就繼續等待下一個直播。
+但是不斷的等待，等於是一個人很固定的每隔 15 秒按一次 F5 重整網頁，
+說不定會被 ban 掉，這要自行斟酌。
+
+
 # dependency
+
+需要 ffmpeg 以及 ffprobe。ffmpeg 用來合併片段為完整影片檔案，
+ffprobe 用來查詢目前片段累計的時間。
 
 除了 golang 內建 library 之外，還有參考引用別人的專案
 
