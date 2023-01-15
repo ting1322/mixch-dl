@@ -7,13 +7,28 @@ import (
 	"io"
 	"log"
 	"mixch"
+	"sync"
 	"time"
 
 	"nhooyr.io/websocket"
 )
 
 type Chat struct {
-	Fs inter.IFs
+	Fs    inter.IFs
+	mu    sync.Mutex
+	count int64
+}
+
+func (this *Chat) GetCount() int64 {
+	this.mu.Lock()
+	defer this.mu.Unlock()
+	return this.count
+}
+
+func (this *Chat) incCount() {
+	this.mu.Lock()
+	this.count++
+	this.mu.Unlock()
 }
 
 func (c *Chat) Connect(ctx context.Context, netconn inter.INet, wssurl, filename string) {
@@ -101,6 +116,7 @@ func (chat *Chat) parseComment(node jmap, writer io.Writer, msgTime int64) {
 		log.Println("not found author")
 		return
 	}
+	chat.incCount()
 	name := author.(jmap)["name"].(string)
 
 	ytc := mixch.ConvertToYtChat(msgTime, name, body)

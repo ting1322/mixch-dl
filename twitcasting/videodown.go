@@ -17,6 +17,7 @@ type VDown struct {
 	conn      inter.INet
 	fragCount int64
 	mu        sync.Mutex
+	chat      *Chat
 }
 
 func (v *VDown) DownloadMerge(ctx context.Context, netconn inter.INet, wssurl string, filename string) {
@@ -89,10 +90,20 @@ func (v *VDown) try1(ctx context.Context, netconn inter.INet, wssurl string, wri
 		log.Println("WSS(video): close")
 	}()
 
+	statusTimer := time.NewTimer(2 * time.Second)
+	first := true
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
+		case <-statusTimer.C:
+			if !first {
+				inter.DeletePreviousLine()
+			}
+			first = false
+			fmt.Printf("downloaded video fragment: %d, chat: %d\n", v.GetFragCount(), v.chat.GetCount())
+			statusTimer.Reset(2 * time.Second)
+			break
 		default:
 			ctx2, cancel := context.WithTimeout(ctx, 30*time.Second)
 			_, data, err := c.Read(ctx2)
@@ -100,10 +111,7 @@ func (v *VDown) try1(ctx context.Context, netconn inter.INet, wssurl string, wri
 			if err != nil {
 				return fmt.Errorf("read websocket: %w", err)
 			}
-
 			v.incFrag()
-			inter.DeletePreviousLine()
-			fmt.Printf("downloaded video fragment: %d\n", v.GetFragCount())
 			writer.Write(data)
 		}
 	}

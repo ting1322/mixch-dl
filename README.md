@@ -127,3 +127,4 @@ ffprobe 用來查詢目前片段累計的時間。
 
 1. nhooyr.io/websocket 連接 mixch 的 聊天室，以及 twitcasting 的 影片＋聊天室
 2. github.com/zellyn/kooky 用來讀取瀏覽器的 cookie
+3. github.com/mattn/go-isatty 用來判斷目前的輸入，是 log 檔案還是終端機

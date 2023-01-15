@@ -146,6 +146,7 @@ func (m *Live) Download(ctx context.Context, netconn inter.INet, fio inter.IFs, 
 	m.vd = &VDown{
 		fs:   fio,
 		conn: netconn,
+		chat: chat,
 	}
 	m.vd.DownloadMerge(ctx, netconn, m.VideoUrl, filename)
 	cancel()
