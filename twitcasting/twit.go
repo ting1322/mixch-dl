@@ -71,43 +71,44 @@ func (m *Live) waitLiveLoop(ctx context.Context, interval time.Duration, conn in
 }
 
 func (m *Live) LoadUserPage(ctx context.Context, conn inter.INet) error {
-	userInfoUrl := fmt.Sprintf("https://twitcasting.tv/%v", m.Id)
-	webText, err := conn.GetWebPage(ctx, userInfoUrl)
-	if err != nil {
-		return fmt.Errorf("get user page: %w", err)
-	}
+	if m.pass != "" {
+		userInfoUrl := fmt.Sprintf("https://twitcasting.tv/%v", m.Id)
+		webText, err := conn.GetWebPage(ctx, userInfoUrl)
+		if err != nil {
+			return fmt.Errorf("get user page: %w", err)
+		}
 
-	if strings.Contains(webText, `<input type="text" name="password" value="">`) {
-		if m.pass == "" {
-			return errors.New("password word is required")
-		}
-		postData := make(map[string]string)
-		postData["password"] = url.QueryEscape(m.pass)
-		re, err := regexp.Compile(`<input type="hidden" name="cs_session_id" value="(\w+)">`)
-		mgroup := re.FindStringSubmatch(webText)
-		if mgroup != nil {
-			postData["cs_session_id"] = mgroup[1]
-		}
-		webText, err = conn.Post(ctx, userInfoUrl, postData)
-		if err != nil {
-			return fmt.Errorf("submit password: %w", err)
-		}
-		m.wpass, err = conn.GetCookie("wpass", "https://twitcasting.tv", "/"+m.Id)
-		if err != nil {
-			return fmt.Errorf("get password: %w", err)
+		if strings.Contains(webText, `<input type="text" name="password" value="">`) {
+			//if m.pass == "" {
+			//	return errors.New("password word is required")
+			//}
+			postData := make(map[string]string)
+			postData["password"] = url.QueryEscape(m.pass)
+			re, err := regexp.Compile(`<input type="hidden" name="cs_session_id" value="(\w+)">`)
+			mgroup := re.FindStringSubmatch(webText)
+			if mgroup != nil {
+				postData["cs_session_id"] = mgroup[1]
+			}
+			webText, err = conn.Post(ctx, userInfoUrl, postData)
+			if err != nil {
+				return fmt.Errorf("submit password: %w", err)
+			}
+			m.wpass, err = conn.GetCookie("wpass", "https://twitcasting.tv", "/"+m.Id)
+			if err != nil {
+				return fmt.Errorf("get password: %w", err)
+			}
 		}
 	}
 
 	videoInfoUrl := fmt.Sprintf("https://twitcasting.tv/streamserver.php?target=%v&mode=client", m.Id)
-	webText, err = conn.GetWebPage(ctx, videoInfoUrl)
+	webText, err := conn.GetWebPage(ctx, videoInfoUrl)
 	if err != nil {
 		return fmt.Errorf("get video info: %w", err)
 	}
 
 	err = parseStreamInfo(m, webText)
 	if err != nil {
-		log.Printf("Response: %v\n", webText)
-		return fmt.Errorf("parse video info: %w", err)
+		return fmt.Errorf("parse video info: %w\nresponse: %v", err, webText)
 	}
 
 	pdata := make(map[string]string)
@@ -122,8 +123,7 @@ func (m *Live) LoadUserPage(ctx context.Context, conn inter.INet) error {
 	}
 	err = parseChatInfo(m, webText)
 	if err != nil {
-		log.Printf("Response: %v\n", webText)
-		return fmt.Errorf("parse chat info: %w", err)
+		return fmt.Errorf("parse chat info: %w\nresponse: %v", err, webText)
 	}
 	if !m.IsLive || len(m.VideoUrl) == 0 || len(m.Chat) == 0 {
 		return inter.ErrNolive
