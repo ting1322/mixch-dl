@@ -92,8 +92,8 @@ need a url as argument, for example:
 			// we need try again, until any video fragment has been download.
 			continue
 		}
-		if err != nil {
-			break
+		if err != nil && loopAtFinish {
+			time.Sleep(30 * time.Second)
 		}
 		if !loopAtFinish {
 			break

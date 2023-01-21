@@ -2,8 +2,8 @@ package inter
 
 import (
 	"fmt"
-	"os"
 	"github.com/mattn/go-isatty"
+	"os"
 )
 
 var isterminal bool

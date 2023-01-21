@@ -49,7 +49,7 @@ func (m *Live) WaitStreamStart(ctx context.Context, conn inter.INet) error {
 			log.Fatal(err)
 		}
 	} else if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	return nil
 }
