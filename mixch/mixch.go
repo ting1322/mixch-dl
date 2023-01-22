@@ -45,7 +45,7 @@ func (m *Mixch) WaitStreamStart(ctx context.Context, conn inter.INet) error {
 		log.Println("wait stream start......")
 		err = m.waitLiveLoop(ctx, 15*time.Second, conn)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 	} else if err != nil {
 		return err

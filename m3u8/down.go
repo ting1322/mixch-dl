@@ -202,7 +202,7 @@ func downloadM3U8(ctx context.Context, url string, conn inter.INet) (*M3U8, erro
 				timeText := line[8 : len(line)-1]
 				time, err = strconv.ParseFloat(timeText, 64)
 				if err != nil {
-					log.Fatal(err)
+					return nil, err
 				}
 			} else if strings.HasPrefix(line, "#EXT-X-VERSION:") {
 				m3u8.version, _ = strconv.Atoi(strings.TrimPrefix(line, "#EXT-X-VERSION:"))
