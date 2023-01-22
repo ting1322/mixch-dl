@@ -111,11 +111,11 @@ func downloadFlow(url string) error {
 		var err error
 		live, err = mixch.New(url)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		err = live.WaitStreamStart(ctx, netconn)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		filename = fmt.Sprintf("mixch-%v", time.Now().Local().Format("2006-01-02-15-04"))
 	} else if twitcasting.Support(url) {
@@ -123,12 +123,12 @@ func downloadFlow(url string) error {
 		live = twitcasting.New(url, pass)
 		err := live.WaitStreamStart(ctx, netconn)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		filename = fmt.Sprintf("twitcasting-%v", time.Now().Local().Format("2006-01-02-15-04"))
 	} else {
 		fmt.Printf("not support url: %v\n", os.Args[1])
-		return errors.New("not support url")
+		log.Fatal("not support url")
 	}
 
 	sigchan := make(chan os.Signal, 1)
