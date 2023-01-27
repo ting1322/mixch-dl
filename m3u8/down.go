@@ -46,6 +46,9 @@ func (d *Downloader) tryDownloadLostFrag(ctx context.Context, tsw io.Writer, bas
 	if startIdx < 0 {
 		startIdx = 0
 	}
+	if startIdx < d.seq + 1 {
+		startIdx = d.seq + 1
+	}
 	log.Printf("REMEDY: downloaded video number:%v, current video number:%v, download:%v-%v\n", d.seq, curIdx, startIdx, curIdx-1)
 	workList := make([]*DownloadWorker, 0)
 	for i := startIdx; i < curIdx; i++ {
@@ -84,7 +87,7 @@ func (d *Downloader) downloadAndWrite(ctx context.Context, m3u8Url string, tsw i
 
 	baseurl := m3u8Url[0:strings.LastIndex(m3u8Url, "/")]
 
-	if m3u8.sequence > d.seq && len(m3u8.tsList) > 0 {
+	if m3u8.sequence > (d.seq + 1) && len(m3u8.tsList) > 0 {
 		re, _ := regexp.Compile(`(.+-)(\d+)\.ts$`)
 		m := re.FindStringSubmatch(d.m3u8.tsList[0].name)
 		curIdx, err := strconv.Atoi(m[2])
