@@ -1,0 +1,15 @@
+# systemd service file, save to
+#  /home/ting/.config/systemd/user/mixch-dl-umi-mixch.service
+#
+
+[Unit]
+Description=mixch-dl for Umi (mixch)
+Documentation=https://github.com/ting1322/mixch-dl
+
+[Service]
+ExecStart=%h/umi/start-mixch.sh
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=default.target

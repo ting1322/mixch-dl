@@ -30,6 +30,10 @@ mixch-dl -pass THE_PASSWORD https://twitcasting.tv/quon01tama
 mixch-dl -version
 ```
 
+## systemd service
+
+在 linux 可以使用 systemd 來啟動程式，這邊有我的 service 定義： [systemd-script](systemd-script)
+
 # 編譯
 
 github 有上傳執行檔給 windows 64-bit, linux 64-bit。
