@@ -7,7 +7,6 @@ import (
 	"inter"
 	"io"
 	"log"
-	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -27,6 +26,7 @@ type Downloader struct {
 	conn           inter.INet
 	fs             inter.IFs
 	tspartFilename string
+	GuessTs        func(firstTs, baseurl string, downloadedIdx int) []string
 }
 
 func (d *Downloader) GetFragCount() int64 {
@@ -41,19 +41,10 @@ func (d *Downloader) incFrag() {
 	d.mu.Unlock()
 }
 
-func (d *Downloader) tryDownloadLostFrag(ctx context.Context, tsw io.Writer, baseurl, prefix string, curIdx int) {
-	startIdx := curIdx - 6
-	if startIdx < 0 {
-		startIdx = 0
-	}
-	if startIdx < d.seq + 1 {
-		startIdx = d.seq + 1
-	}
-	log.Printf("REMEDY: downloaded video number:%v, current video number:%v, download:%v-%v\n", d.seq, curIdx, startIdx, curIdx-1)
+func (d *Downloader) tryDownloadLostFrag(ctx context.Context, tsw io.Writer, urlList []string) {
 	workList := make([]*DownloadWorker, 0)
-	for i := startIdx; i < curIdx; i++ {
-		url := fmt.Sprintf("%v/%v%v.ts", baseurl, prefix, i)
-		w := NewWorker(url)
+	for _, urlText := range urlList {
+		w := NewWorker(urlText)
 		workList = append(workList, w)
 		go w.run(ctx, d.conn)
 	}
@@ -74,7 +65,6 @@ func (d *Downloader) tryDownloadLostFrag(ctx context.Context, tsw io.Writer, bas
 	if err == nil {
 		d.totalTime = t
 	}
-	d.seq = curIdx - 1
 	log.Printf("REMEDY: success:%v, fail:%v, currentTime:%v\n", successCount, failCount, d.totalTime)
 }
 
@@ -87,13 +77,9 @@ func (d *Downloader) downloadAndWrite(ctx context.Context, m3u8Url string, tsw i
 
 	baseurl := m3u8Url[0:strings.LastIndex(m3u8Url, "/")]
 
-	if m3u8.sequence > (d.seq + 1) && len(m3u8.tsList) > 0 {
-		re, _ := regexp.Compile(`(.+-)(\d+)\.ts$`)
-		m := re.FindStringSubmatch(d.m3u8.tsList[0].name)
-		curIdx, err := strconv.Atoi(m[2])
-		if err == nil {
-			d.tryDownloadLostFrag(ctx, tsw, baseurl, m[1], curIdx)
-		}
+	if m3u8.sequence > (d.seq+1) && len(m3u8.tsList) > 0 && d.GuessTs != nil {
+		urlList := d.GuessTs(d.m3u8.tsList[0].name, baseurl, d.seq)
+		d.tryDownloadLostFrag(ctx, tsw, urlList)
 	}
 
 	for idx, ts := range m3u8.tsList {

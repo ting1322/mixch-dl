@@ -5,13 +5,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/ting1322/chat-player/pkg/cplayer"
 	"inter"
 	"log"
 	"m3u8"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
+
+	"github.com/ting1322/chat-player/pkg/cplayer"
 )
 
 type Mixch struct {
@@ -85,6 +87,33 @@ func (m *Mixch) LoadUserPage(ctx context.Context, conn inter.INet) error {
 	return nil
 }
 
+func guessTs(firstTs, baseurl string, downloadedIdx int) []string {
+	urlList := make([]string, 0)
+	re, _ := regexp.Compile(`(.+-)(\d+)\.ts$`)
+	m := re.FindStringSubmatch(firstTs)
+	if m == nil || len(m) < 2 {
+		return urlList
+	}
+	curIdx, err := strconv.Atoi(m[2])
+	if err != nil {
+		return urlList
+	}
+	//d.tryDownloadLostFrag(ctx, tsw, baseurl, m[1], curIdx)
+	startIdx := curIdx - 6
+	if startIdx < 0 {
+		startIdx = 0
+	}
+	if startIdx < downloadedIdx+1 {
+		startIdx = downloadedIdx + 1
+	}
+	log.Printf("REMEDY: downloaded video number:%v, current video number:%v, download:%v-%v\n", downloadedIdx, curIdx, startIdx, curIdx-1)
+	for i := startIdx; i < curIdx; i++ {
+		url := fmt.Sprintf("%v/%v%v.ts", baseurl, m[1], i)
+		urlList = append(urlList, url)
+	}
+	return urlList
+}
+
 func (m *Mixch) Download(ctx context.Context, netconn inter.INet, fio inter.IFs, filename string) error {
 	ctx2, cancel := context.WithCancel(ctx)
 	chat := &Chat{Fs: fio}
@@ -98,7 +127,8 @@ func (m *Mixch) Download(ctx context.Context, netconn inter.INet, fio inter.IFs,
 	}
 
 	m.vd = &m3u8.Downloader{
-		Chat: chat,
+		Chat:    chat,
+		GuessTs: guessTs,
 	}
 	m.vd.DownloadMerge(ctx, m.M3u8Url, netconn, fio, filename)
 	cancel()
