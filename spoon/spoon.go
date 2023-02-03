@@ -121,13 +121,14 @@ func (m *Spoon) parseLiveInfoPage(jsonText string) bool {
 }
 
 func (m *Spoon) Download(ctx context.Context, netconn inter.INet, fio inter.IFs, filename string) error {
-	ctx2, cancel := context.WithCancel(ctx)
+	//ctx2, cancel := context.WithCancel(ctx)
 	chat := &Chat{Fs: fio}
 	var cs chan int
 	if len(m.Chat) > 0 {
 		cs = make(chan int, 1)
 		go func() {
-			chat.Connect(ctx2, m.Chat, filename)
+			log.Println("skip chat room")
+			//chat.Connect(ctx2, m.Chat, filename)
 			cs <- 1
 		}()
 	}
@@ -136,7 +137,7 @@ func (m *Spoon) Download(ctx context.Context, netconn inter.INet, fio inter.IFs,
 		Chat: chat,
 	}
 	m.vd.DownloadMerge(ctx, m.M3u8Url, netconn, fio, filename)
-	cancel()
+	//cancel()
 	if cs != nil {
 		<-cs
 	}
