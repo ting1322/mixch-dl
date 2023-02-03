@@ -112,7 +112,7 @@ func (chat *Chat) connectTry1(ctx context.Context, wssUrl string, writer io.Writ
 				log.Println("mixch/chat connectTry1", err)
 				return
 			}
-			log.Println("(wss chat)", "receive", string(data))
+			//log.Println("(wss chat)", "receive", string(data))
 
 			var jsonmap jmap
 			decoder := json.NewDecoder(bytes.NewReader(data))
@@ -127,6 +127,7 @@ func (chat *Chat) connectTry1(ctx context.Context, wssUrl string, writer io.Writ
 					cancel()
 				} else if evtStr == "live_message" {
 					userName, body, success := decodeLiveMessage(jsonmap)
+					log.Println("(wss chat)", userName, body)
 					if success {
 						msgTime := time.Since(chat.getStartTime()).Milliseconds()
 						ytc := ConvertToYtChat(msgTime, userName, body)
