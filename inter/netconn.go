@@ -24,7 +24,8 @@ type INet interface {
 }
 
 var (
-	LogNetwork bool = true
+	LogNetwork     bool = true
+	AutoLoadCookie bool = true
 )
 
 type Net struct {
@@ -44,7 +45,9 @@ func (m *Net) GetHttpClient() *http.Client {
 func NewNetConn(baseurl string) *Net {
 	net := &Net{}
 
-	importCookie(&net.client, baseurl)
+	if AutoLoadCookie {
+		importCookie(&net.client, baseurl)
+	}
 	return net
 }
 

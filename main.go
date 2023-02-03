@@ -22,6 +22,7 @@ var (
 	netconn        inter.INet
 	pass           string
 	loopAtFinish   bool
+	argNoCookie    bool
 )
 
 func parseTime(text string) (time.Time, error) {
@@ -43,10 +44,14 @@ func main() {
 	flag.StringVar(&pass, "pass", "", "password for twitcasting")
 	flag.BoolVar(&loopAtFinish, "loop", false, "continue run even if download finish")
 	flag.BoolVar(&argVersion, "version", false, "show program version and exit.")
+	flag.BoolVar(&argNoCookie, "no-cookie", false, "do not load cookie from browser. (default enable)")
 	flag.Parse()
 	if argVersion {
 		fmt.Println("mixch-dl", programVersion)
 		return
+	}
+	if argNoCookie {
+		inter.AutoLoadCookie = false
 	}
 	var url string
 	if flag.NArg() > 0 {
