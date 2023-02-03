@@ -11,13 +11,13 @@ import (
 	"mixch"
 	"os"
 	"os/signal"
+	"spoon"
 	"time"
 	"twitcasting"
-	"spoon"
 )
 
 var (
-	programVersion string           = "1.x.x-custombuild"
+	programVersion string           = "1.x-dev"
 	downloader     *m3u8.Downloader = &m3u8.Downloader{}
 	fio            inter.IFs        = &inter.Fs{}
 	netconn        inter.INet
@@ -47,8 +47,8 @@ func main() {
 	flag.BoolVar(&argVersion, "version", false, "show program version and exit.")
 	flag.BoolVar(&argNoCookie, "no-cookie", false, "do not load cookie from browser. (default enable)")
 	flag.Parse()
+	fmt.Println("mixch-dl", programVersion)
 	if argVersion {
-		fmt.Println("mixch-dl", programVersion)
 		return
 	}
 	if argNoCookie {

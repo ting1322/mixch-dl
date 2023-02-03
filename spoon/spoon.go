@@ -13,11 +13,11 @@ import (
 )
 
 type Spoon struct {
-	Id       string
-	liveId   string
-	M3u8Url  string
-	Chat     string
-	vd       *m3u8.Downloader
+	Id      string
+	liveId  string
+	M3u8Url string
+	Chat    string
+	vd      *m3u8.Downloader
 }
 
 func New(text string) *Spoon {
@@ -114,7 +114,7 @@ func (m *Spoon) parseLiveInfoPage(jsonText string) bool {
 	for _, result := range jsonmap["results"].([]any) {
 		if url_hls, exist := result.(jmap)["url_hls"]; exist {
 			m.M3u8Url = url_hls.(string)
-			break;
+			break
 		}
 	}
 	return m.M3u8Url != ""

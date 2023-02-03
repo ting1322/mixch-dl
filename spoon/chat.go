@@ -108,7 +108,7 @@ func (chat *Chat) connectTry1(ctx context.Context, wssUrl string, writer io.Writ
 			decoder.Decode(&jsonmap)
 			if event, exist := jsonmap["event"]; exist {
 				if event.(string) == "live_message" {
-					
+
 				}
 
 			}
