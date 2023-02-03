@@ -20,6 +20,13 @@ type VDown struct {
 	chat      *Chat
 }
 
+type Status int
+
+const (
+	SomeSuccess Status = iota
+	AllFail
+)
+
 func (v *VDown) DownloadMerge(ctx context.Context, netconn inter.INet, wssurl string, filename string) {
 	tspartFilename := filename + ".ts.part"
 	v.downloadLoop(ctx, netconn, wssurl, tspartFilename)
@@ -54,23 +61,26 @@ func (v *VDown) downloadLoop(ctx context.Context, netconn inter.INet, wssurl, fi
 		case <-ctx.Done():
 			return
 		default:
-			err := v.try1(ctx, netconn, wssurl, writer)
+			status, err := v.try1(ctx, netconn, wssurl, writer) // return until error
 			if ctx.Err() == context.Canceled {
-				fmt.Println()
+				// nothing
 			} else if err != nil {
-				retry--
-				fmt.Println()
+				log.Println()
 				log.Printf("WSS(video) error, retry=%v, %v\n", retry, err)
+				if status == AllFail {
+					retry--
+				} else if status == SomeSuccess {
+					retry = 5
+				}
 				if retry <= 0 {
 					return
 				}
-			} else {
-				retry = 5
 			}
 		}
 	}
 }
-func (v *VDown) try1(ctx context.Context, netconn inter.INet, wssurl string, writer io.Writer) error {
+func (v *VDown) try1(ctx context.Context, netconn inter.INet, wssurl string, writer io.Writer) (Status, error) {
+	var status Status = AllFail
 	ctx2, cancel := context.WithTimeout(ctx, 15*time.Second)
 	log.Println("WSS(video):", wssurl)
 	dopt := &websocket.DialOptions{
@@ -81,7 +91,7 @@ func (v *VDown) try1(ctx context.Context, netconn inter.INet, wssurl string, wri
 	cancel()
 	if err != nil {
 		log.Println(err)
-		return fmt.Errorf("open websocket: %w", err)
+		return status, fmt.Errorf("open websocket: %w", err)
 	}
 	c.SetReadLimit(1024 * 1024 * 4)
 
@@ -91,17 +101,13 @@ func (v *VDown) try1(ctx context.Context, netconn inter.INet, wssurl string, wri
 	}()
 
 	statusTimer := time.NewTimer(2 * time.Second)
-	first := true
 	for {
 		select {
 		case <-ctx.Done():
-			return nil
+			return status, nil
 		case <-statusTimer.C:
-			if !first {
-				inter.DeletePreviousLine()
-			}
-			first = false
-			fmt.Printf("downloaded video fragment: %d, chat: %d\n", v.GetFragCount(), v.chat.GetCount())
+			inter.ClearLine()
+			fmt.Printf("downloaded video fragment: %d, chat: %d\r", v.GetFragCount(), v.chat.GetCount())
 			statusTimer.Reset(2 * time.Second)
 			break
 		default:
@@ -109,9 +115,10 @@ func (v *VDown) try1(ctx context.Context, netconn inter.INet, wssurl string, wri
 			_, data, err := c.Read(ctx2)
 			cancel()
 			if err != nil {
-				return fmt.Errorf("read websocket: %w", err)
+				return status, fmt.Errorf("read websocket: %w", err)
 			}
 			v.incFrag()
+			status = SomeSuccess
 			writer.Write(data)
 		}
 	}

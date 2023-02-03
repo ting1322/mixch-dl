@@ -23,3 +23,9 @@ func DeletePreviousLine() {
 		fmt.Print("\u001b[1A\u001b[2K\r")
 	}
 }
+
+func ClearLine() {
+	if isterminal {
+		fmt.Print("\u001b[2K")
+	}
+}

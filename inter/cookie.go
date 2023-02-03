@@ -20,7 +20,7 @@ func importCookie(client *http.Client, baseurl string) {
 		log.Fatal("setting cookie, parse base url with error:", err)
 	}
 	cookies := kooky.ReadCookies(kooky.Valid, kooky.DomainHasSuffix(burl.Host))
-	log.Printf("try load cookies from browser, fouund: %v", len(cookies))
+	log.Printf("load cookies from browser, found: %v", len(cookies))
 
 	hcookies := make([]*http.Cookie, len(cookies))
 	for idx, c := range cookies {
