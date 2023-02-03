@@ -17,13 +17,13 @@ import (
 )
 
 var (
-	programVersion string           = "1.x-dev"
-	downloader     *m3u8.Downloader = &m3u8.Downloader{}
-	fio            inter.IFs        = &inter.Fs{}
-	netconn        inter.INet
-	pass           string
-	loopAtFinish   bool
-	argNoCookie    bool
+	programVersion       string           = "1.x-dev"
+	downloader           *m3u8.Downloader = &m3u8.Downloader{}
+	fio                  inter.IFs        = &inter.Fs{}
+	netconn              inter.INet
+	pass                 string
+	loopAtFinish         bool
+	argCookieFromBrowser bool
 )
 
 func parseTime(text string) (time.Time, error) {
@@ -45,15 +45,13 @@ func main() {
 	flag.StringVar(&pass, "pass", "", "password for twitcasting")
 	flag.BoolVar(&loopAtFinish, "loop", false, "continue run even if download finish")
 	flag.BoolVar(&argVersion, "version", false, "show program version and exit.")
-	flag.BoolVar(&argNoCookie, "no-cookie", false, "do not load cookie from browser. (default enable)")
+	flag.BoolVar(&argCookieFromBrowser, "cookies-from-browser", false, "do not load cookie from browser. (default enable)")
 	flag.Parse()
 	fmt.Println("mixch-dl", programVersion)
 	if argVersion {
 		return
 	}
-	if argNoCookie {
-		inter.AutoLoadCookie = false
-	}
+	inter.AutoLoadCookie = argCookieFromBrowser
 	var url string
 	if flag.NArg() > 0 {
 		url = flag.Arg(0)

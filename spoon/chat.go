@@ -15,6 +15,7 @@ import (
 )
 
 type Chat struct {
+	liveId    string
 	Fs        inter.IFs
 	startTime time.Time
 	count     int
@@ -86,11 +87,21 @@ func (chat *Chat) connectTry1(ctx context.Context, wssUrl string, writer io.Writ
 		log.Println("WSS: close")
 	}()
 
+	initMsg := fmt.Sprintf(`{"live_id": "%v", "appversion": "7.12.13", "retry": 0, "reconnect": false, "event": "live_join", "type": "live_req", "useragent": "Web"}`, chat.liveId)
+
+	keepMsg := fmt.Sprintf(`{"live_id": "%v", "appversion": "7.12.13", "event": "live_health", "type": "live_rpt", "useragent": "Web"}`, chat.liveId)
+
+	ctx2, cancel = context.WithTimeout(ctx, 15*time.Second)
+	c.Write(ctx2, websocket.MessageText, []byte(initMsg))
+	cancel()
+
+
 	for {
 		select {
 		case <-ctx.Done():
 			log.Println("try1 done")
 			return
+
 		default:
 			ctx2, cancel := context.WithTimeout(ctx, 30*time.Second)
 			_, data, err := c.Read(ctx2)
@@ -101,20 +112,64 @@ func (chat *Chat) connectTry1(ctx context.Context, wssUrl string, writer io.Writ
 				log.Println("mixch/chat connectTry1", err)
 				return
 			}
+			log.Println("(wss chat)", "receive", string(data))
 
 			var jsonmap jmap
 			decoder := json.NewDecoder(bytes.NewReader(data))
 			decoder.UseNumber()
 			decoder.Decode(&jsonmap)
 			if event, exist := jsonmap["event"]; exist {
-				if event.(string) == "live_message" {
-
+				evtStr := event.(string)
+				if evtStr == "live_health" {
+					log.Println("(wss chat)", "keep alive")
+					ctx2, cancel = context.WithTimeout(ctx, 15*time.Second)
+					c.Write(ctx2, websocket.MessageText, []byte(keepMsg))
+					cancel()
+				} else if evtStr == "live_message" {
+					userName, body, success := decodeLiveMessage(jsonmap)
+					if success {
+						msgTime := time.Since(chat.getStartTime()).Milliseconds()
+						ytc := ConvertToYtChat(msgTime, userName, body)
+						writer.Write(ytc)
+						writer.Write([]byte("\n"))
+						chat.incCount()
+					}
 				}
-
 			}
 		}
 	}
 
+}
+
+
+func decodeLiveMessage(jsonmap jmap) (userName, body string, success bool) {
+	data, exist := jsonmap["data"]
+	if !exist {
+		return "", "", false
+	}
+	user, exist := data.(jmap)["user"]
+	if !exist {
+		return "", "", false
+	}
+	nickName, exist := user.(jmap)["nickname"]
+	if !exist {
+		return "", "", false
+	}
+	userName = nickName.(string)
+	update_component, exist := jsonmap["update_component"]
+	if !exist {
+		return "", "", false
+	}
+	message, exist := update_component.(jmap)["message"]
+	if !exist {
+		return "", "", false
+	}
+	value, exist := message.(jmap)["value"]
+	if !exist {
+		return "", "", false
+	}
+	body = value.(string)
+	return userName, body, true
 }
 
 func ConvertToYtChat(msgTime int64, name, body string) []byte {

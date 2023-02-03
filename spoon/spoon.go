@@ -10,6 +10,8 @@ import (
 	"m3u8"
 	"strings"
 	"time"
+
+	"github.com/ting1322/chat-player/pkg/cplayer"
 )
 
 type Spoon struct {
@@ -121,30 +123,39 @@ func (m *Spoon) parseLiveInfoPage(jsonText string) bool {
 }
 
 func (m *Spoon) Download(ctx context.Context, netconn inter.INet, fio inter.IFs, filename string) error {
-	//ctx2, cancel := context.WithCancel(ctx)
-	chat := &Chat{Fs: fio}
+	ctx2, cancel := context.WithCancel(ctx)
+	chat := &Chat{
+		Fs: fio,
+		liveId: m.liveId,
+	}
 	var cs chan int
 	if len(m.Chat) > 0 {
 		cs = make(chan int, 1)
 		go func() {
 			log.Println("skip chat room")
-			//chat.Connect(ctx2, m.Chat, filename)
+			chat.Connect(ctx2, m.Chat, filename)
 			cs <- 1
 		}()
 	}
 
 	m.vd = &m3u8.Downloader{
-		Chat: chat,
+		Chat:    chat,
+		GuessTs: guessTs,
 	}
 	m.vd.DownloadMerge(ctx, m.M3u8Url, netconn, fio, filename)
-	//cancel()
+	cancel()
 	if cs != nil {
 		<-cs
 	}
 	if m.vd.GetFragCount() == 0 {
 		return inter.ErrNolive
 	} else {
-		//generateHtml(filename + ".mp4")
+		generateHtml(filename + ".mp4")
 		return nil
 	}
+}
+
+func generateHtml(mp4 string) {
+	option := cplayer.NewOption()
+	cplayer.ProcessVideo(option, mp4)
 }
