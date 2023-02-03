@@ -71,6 +71,9 @@ need a url as argument, for example:
 
   mixch-dl -pass THE_PASSWORD https://twitcasting.tv/quon01tama
     (twitcasting with password)
+
+  mixch-dl https://www.spooncast.net/jp/live/@lala_ukulele
+    (spoon jp)
 `)
 		return
 	}

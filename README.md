@@ -23,6 +23,9 @@ mixch-dl.exe https://mixch.tv/u/1234567/live 18:58
 # twitcasting 的網址也有機會抓到，但影片經常會缺失片段
 mixch-dl https://twitcasting.tv/c:annuuuu_cas
 
+# spoon 的網址也有機會抓到 (網址 jp 限定)
+mixch-dl https://www.spooncast.net/jp/live/@lala_ukulele
+
 # twitcasting 需要密碼可以用 -pass 指定密碼
 mixch-dl -pass THE_PASSWORD https://twitcasting.tv/quon01tama
 
@@ -85,9 +88,10 @@ ffmpeg -i xxx.ts -c copy -bsf setts=ts=TS-STARTPTS -map 0 -dn -ignore_unknown -s
 
 ### cookie
 
-cookie 的部份，會試著從瀏覽器抓。如果 firefox + chrome 同時都有登入的狀況，
-似乎會抓到多個相同的 cookie？這我不太確定，如果怪怪的，建議只保留一個瀏覽器
-是登入狀態，其他瀏覽器的 cookie 都清掉。
+cookie 的部份，如果需要可以使用 `-cookies-from-browser` 會試著從瀏覽器
+抓。如果 firefox + chrome 同時都有登入的狀況，似乎會抓到多個相同的
+cookie？這我不太確定，如果怪怪的，建議只保留一個瀏覽器是登入狀態，其他
+瀏覽器的 cookie 都清掉。
 
 ### mixch
 
