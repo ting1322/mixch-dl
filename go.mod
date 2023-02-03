@@ -8,12 +8,15 @@ replace m3u8 => ./m3u8
 
 replace twitcasting => ./twitcasting
 
+replace spoon => ./spoon
+
 replace inter => ./inter
 
 require (
 	inter v0.0.0-00010101000000-000000000000
 	m3u8 v0.0.0-00010101000000-000000000000
 	mixch v0.0.0-00010101000000-000000000000
+	spoon v0.0.0-00010101000000-000000000000
 	twitcasting v0.0.0-00010101000000-000000000000
 )
 

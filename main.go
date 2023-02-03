@@ -13,6 +13,7 @@ import (
 	"os/signal"
 	"time"
 	"twitcasting"
+	"spoon"
 )
 
 var (
@@ -131,6 +132,14 @@ func downloadFlow(url string) error {
 			return err
 		}
 		filename = fmt.Sprintf("twitcasting-%v", time.Now().Local().Format("2006-01-02-15-04"))
+	} else if spoon.Support(url) {
+		netconn = inter.NewNetConn(url)
+		live = spoon.New(url)
+		err := live.WaitStreamStart(ctx, netconn)
+		if err != nil {
+			return err
+		}
+		filename = fmt.Sprintf("spoon-%v", time.Now().Local().Format("2006-01-02-15-04"))
 	} else {
 		fmt.Printf("not support url: %v\n", os.Args[1])
 		log.Fatal("not support url")
