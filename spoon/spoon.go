@@ -41,7 +41,7 @@ func (m *Spoon) WaitStreamStart(ctx context.Context, conn inter.INet) error {
 	err := m.LoadUserPage(ctx, conn)
 	if errors.Is(err, inter.ErrNolive) {
 		log.Println("wait stream start......")
-		err = m.waitLiveLoop(ctx, 15*time.Second, conn)
+		err = m.waitLiveLoop(ctx, 30*time.Second, conn)
 		if err != nil {
 			return err
 		}
