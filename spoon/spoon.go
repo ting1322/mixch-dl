@@ -18,6 +18,8 @@ type Spoon struct {
 	Id      string
 	liveId  string
 	M3u8Url string
+	imgUrl  string
+	title   string
 	Chat    string
 	vd      *m3u8.Downloader
 }
@@ -116,7 +118,12 @@ func (m *Spoon) parseLiveInfoPage(jsonText string) bool {
 	for _, result := range jsonmap["results"].([]any) {
 		if url_hls, exist := result.(jmap)["url_hls"]; exist {
 			m.M3u8Url = url_hls.(string)
-			break
+		}
+		if img_url, exist := result.(jmap)["img_url"]; exist {
+			m.imgUrl = img_url.(string)
+		}
+		if title, exist := result.(jmap)["title"]; exist {
+			m.title = title.(string)
 		}
 	}
 	return m.M3u8Url != ""
@@ -125,7 +132,7 @@ func (m *Spoon) parseLiveInfoPage(jsonText string) bool {
 func (m *Spoon) Download(ctx context.Context, netconn inter.INet, fio inter.IFs, filename string) error {
 	ctx2, cancel := context.WithCancel(ctx)
 	chat := &Chat{
-		Fs: fio,
+		Fs:     fio,
 		liveId: m.liveId,
 	}
 	var cs chan int
