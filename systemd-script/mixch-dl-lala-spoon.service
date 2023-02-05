@@ -3,15 +3,15 @@
 #
 
 [Unit]
-Description=mixch-dl for Umi (twitcasting)
+Description=mixch-dl for LaLa (Spoon)
 Documentation=https://github.com/ting1322/mixch-dl
 PartOf=mixchdl.target
 
 [Service]
 ExecSearchPath=%h/go/bin:%h/.local/bin:%h/sdk/flutter/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin
-WorkingDirectory=%h/umi
-ExecStart=mixch-dl -loop https://twitcasting.tv/0007umi
-StandardOutput=append:%h/umi/tc.log
+WorkingDirectory=%h/lala
+ExecStart=mixch-dl -loop https://www.spooncast.net/jp/live/@lala_ukulele
+StandardOutput=append:%h/lala/spoon.log
 StandardError=inherit
 Restart=always
 RestartSec=30

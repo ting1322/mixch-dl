@@ -1,0 +1,16 @@
+# systemd target file, save to
+#  /home/ting/.config/systemd/user/mixchdl.target
+#
+
+[Unit]
+Description=mixch downloader
+Documentation=https://github.com/ting1322/mixch-dl
+
+Requires=mixch-dl-umi-mixch.service
+Requires=mixch-dl-umi-tc.service
+Requires=mixch-dl-lala-spoon.service
+
+After=default.target
+
+[Install]
+WantedBy=default.target
