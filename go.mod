@@ -33,7 +33,7 @@ require (
 	github.com/keybase/go-keychain v0.0.0-20220408132150-ad3b4a8fd4a7 // indirect
 	github.com/klauspost/compress v1.10.3 // indirect
 	github.com/mattn/go-isatty v0.0.17 // indirect
-	github.com/ting1322/chat-player/pkg/cplayer v0.0.0-20221201150455-8fe9771fe856 // indirect
+	github.com/ting1322/chat-player/pkg/cplayer v0.0.0-20230204164700-fb69399a3f2c // indirect
 	github.com/zalando/go-keyring v0.2.1 // indirect
 	github.com/zellyn/kooky v0.0.0-20221025221128-3e66d684c4db // indirect
 	golang.org/x/crypto v0.3.0 // indirect
