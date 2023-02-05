@@ -47,6 +47,6 @@ func FfprobeTime(filename string) (time.Duration, error) {
 		log.Println("FFPROBE ERR:", err)
 		return 0, err
 	}
-	var duration int = int(math.Round(durationFloat))
-	return time.Duration(duration) * time.Second, nil
+	floatTime := durationFloat * float64(time.Second)
+	return time.Duration(math.Round(floatTime)), nil
 }

@@ -79,7 +79,9 @@ func (d *Downloader) downloadAndWrite(ctx context.Context, m3u8Url string, tsw i
 
 	if m3u8.sequence > (d.seq+1) && len(m3u8.tsList) > 0 && d.GuessTs != nil {
 		urlList := d.GuessTs(d.m3u8.tsList[0].name, baseurl, d.seq)
-		d.tryDownloadLostFrag(ctx, tsw, urlList)
+		if urlList != nil && len(urlList) > 0 {
+			d.tryDownloadLostFrag(ctx, tsw, urlList)
+		}
 	}
 
 	for idx, ts := range m3u8.tsList {
