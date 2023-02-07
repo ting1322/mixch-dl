@@ -30,6 +30,30 @@ func FfmpegMerge(in, out string, fixts bool) {
 	}
 }
 
+func FfmpegAddCover(video, img string) {
+	log.Printf("attach cover image to video")
+	outfile := "temp-" + video
+	cmdarg := []string{"-i", video, "-i", img,
+		"-map", "0", "-map", "1",
+		"-disposition:1", "attached_pic",
+		"-c", "copy", outfile}
+	var cmd *exec.Cmd = exec.Command("ffmpeg", cmdarg...)
+	log.Println(cmd)
+	err := cmd.Run()
+	if err == nil {
+		bak := video + ".bak"
+		err = os.Rename(video, bak)
+		if err != nil {
+			return
+		}
+		err = os.Rename(outfile, video)
+		if err != nil {
+			return
+		}
+		os.Remove(bak)
+	}
+}
+
 func FfprobeTime(filename string) (time.Duration, error) {
 	cmdarg := []string{"-v", "error",
 		"-show_entries", "format=duration", "-of",

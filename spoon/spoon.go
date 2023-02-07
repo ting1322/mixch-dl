@@ -139,10 +139,21 @@ func (m *Spoon) Download(ctx context.Context, netconn inter.INet, fio inter.IFs,
 	if len(m.Chat) > 0 {
 		cs = make(chan int, 1)
 		go func() {
-			log.Println("skip chat room")
 			chat.Connect(ctx2, m.Chat, filename)
 			cs <- 1
 		}()
+	}
+
+	coverCh := make(chan string, 1)
+	if m.imgUrl == "" {
+		coverCh <- ""
+	} else {
+		coverFileName, err := downloadCover(ctx, netconn, fio, filename, m.imgUrl)
+		if err != nil {
+			coverCh<- ""
+		} else {
+			coverCh<- coverFileName
+		}
 	}
 
 	m.vd = &m3u8.Downloader{
@@ -156,10 +167,28 @@ func (m *Spoon) Download(ctx context.Context, netconn inter.INet, fio inter.IFs,
 	}
 	if m.vd.GetFragCount() == 0 {
 		return inter.ErrNolive
-	} else {
-		generateHtml(filename + ".mp4")
-		return nil
+	} 
+
+	coverFile := <- coverCh
+	if coverFile != "" {
+		inter.FfmpegAddCover(filename + ".mp4", coverFile)
 	}
+	generateHtml(filename + ".mp4")
+	return nil
+}
+
+func downloadCover(ctx context.Context, netconn inter.INet, fio inter.IFs,
+	filename string, imgUrl string) (string, error) {
+	data, err := netconn.GetFile(ctx, imgUrl)
+	if err != nil {
+		return "", err
+	}
+	coverFile := filename + ".jpg"
+	err = fio.Save(coverFile, data)
+	if err != nil {
+		return "", err
+	}
+	return coverFile, nil
 }
 
 func generateHtml(mp4 string) {
