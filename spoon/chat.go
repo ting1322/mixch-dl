@@ -15,11 +15,12 @@ import (
 )
 
 type Chat struct {
-	liveId    string
-	Fs        inter.IFs
-	startTime time.Time
-	count     int
-	mu        sync.Mutex
+	liveId       string
+	jsAppVersion string
+	Fs           inter.IFs
+	startTime    time.Time
+	count        int
+	mu           sync.Mutex
 }
 
 type Record struct {
@@ -87,14 +88,13 @@ func (chat *Chat) connectTry1(ctx context.Context, wssUrl string, writer io.Writ
 		log.Println("WSS: close")
 	}()
 
-	initMsg := fmt.Sprintf(`{"live_id": "%v", "appversion": "8.0.1", "retry": 0, "reconnect": false, "event": "live_join", "type": "live_req", "useragent": "Web"}`, chat.liveId)
+	initMsg := fmt.Sprintf(`{"live_id": "%v", "appversion": "%v", "retry": 0, "reconnect": false, "event": "live_join", "type": "live_req", "useragent": "Web"}`, chat.liveId, chat.jsAppVersion)
 
-	keepMsg := fmt.Sprintf(`{"live_id": "%v", "appversion": "8.0.1", "event": "live_health", "type": "live_rpt", "useragent": "Web"}`, chat.liveId)
+	keepMsg := fmt.Sprintf(`{"live_id": "%v", "appversion": "%v", "event": "live_health", "type": "live_rpt", "useragent": "Web"}`, chat.liveId, chat.jsAppVersion)
 
 	ctx2, cancel = context.WithTimeout(ctx, 15*time.Second)
 	c.Write(ctx2, websocket.MessageText, []byte(initMsg))
 	cancel()
-
 
 	for {
 		select {
@@ -141,7 +141,6 @@ func (chat *Chat) connectTry1(ctx context.Context, wssUrl string, writer io.Writ
 	}
 
 }
-
 
 func decodeLiveMessage(jsonmap jmap) (userName, body string, success bool) {
 	data, exist := jsonmap["data"]

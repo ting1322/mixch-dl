@@ -8,6 +8,7 @@ import (
 	"inter"
 	"log"
 	"m3u8"
+	"regexp"
 	"strings"
 	"time"
 
@@ -15,13 +16,14 @@ import (
 )
 
 type Spoon struct {
-	Id      string
-	liveId  string
-	M3u8Url string
-	imgUrl  string
-	title   string
-	Chat    string
-	vd      *m3u8.Downloader
+	Id           string
+	liveId       string
+	M3u8Url      string
+	imgUrl       string
+	title        string
+	Chat         string
+	jsAppVersion string
+	vd           *m3u8.Downloader
 }
 
 func New(text string) *Spoon {
@@ -88,8 +90,40 @@ func (m *Spoon) LoadUserPage(ctx context.Context, conn inter.INet) error {
 		return inter.ErrNolive
 	}
 
-	log.Println("m3u8 url:", m.M3u8Url)
+	err = m.LoadJsVersion(ctx, conn)
+	if err != nil {
+		log.Println("find js appversion fail, use default value,", err)
+		m.jsAppVersion = "8.0.1"
+	}
 
+	log.Println("m3u8 url:", m.M3u8Url)
+	log.Println("js appversion:", m.jsAppVersion)
+
+	return nil
+}
+
+func (m *Spoon) LoadJsVersion(ctx context.Context, conn inter.INet) error {
+	url := fmt.Sprintf(`https://www.spooncast.net/jp/live/@%v`, m.Id)
+	webText, err := conn.GetWebPage(ctx, url)
+	if err != nil {
+		return err
+	}
+	re, _ := regexp.Compile(`script src="(/src/js/main\.\w+\.chunk\.js)"`)
+	match := re.FindStringSubmatch(webText)
+	if match == nil || len(match) < 1 {
+		return errors.New("not found main.*.js")
+	}
+	jsurl := `https://www.spooncast.net/` + match[1]
+
+	webText, err = conn.GetWebPage(ctx, jsurl)
+
+	// find: appVersion:"8.0.1"
+	re, _ = regexp.Compile(`appVersion:"([0-9\.]+)"`)
+	match = re.FindStringSubmatch(webText)
+	if match == nil || len(match) < 1 {
+		return errors.New("not found appversion in main.*.js")
+	}
+	m.jsAppVersion = match[1]
 	return nil
 }
 
@@ -132,8 +166,9 @@ func (m *Spoon) parseLiveInfoPage(jsonText string) bool {
 func (m *Spoon) Download(ctx context.Context, netconn inter.INet, fio inter.IFs, filename string) error {
 	ctx2, cancel := context.WithCancel(ctx)
 	chat := &Chat{
-		Fs:     fio,
-		liveId: m.liveId,
+		Fs:           fio,
+		liveId:       m.liveId,
+		jsAppVersion: m.jsAppVersion,
 	}
 	var cs chan int
 	if len(m.Chat) > 0 {
@@ -150,9 +185,9 @@ func (m *Spoon) Download(ctx context.Context, netconn inter.INet, fio inter.IFs,
 	} else {
 		coverFileName, err := downloadCover(ctx, netconn, fio, filename, m.imgUrl)
 		if err != nil {
-			coverCh<- ""
+			coverCh <- ""
 		} else {
-			coverCh<- coverFileName
+			coverCh <- coverFileName
 		}
 	}
 
@@ -167,11 +202,11 @@ func (m *Spoon) Download(ctx context.Context, netconn inter.INet, fio inter.IFs,
 	}
 	if m.vd.GetFragCount() == 0 {
 		return inter.ErrNolive
-	} 
+	}
 
-	coverFile := <- coverCh
+	coverFile := <-coverCh
 	if coverFile != "" {
-		inter.FfmpegAddCover(filename + ".mp4", coverFile)
+		inter.FfmpegAddCover(filename+".mp4", coverFile)
 	}
 	generateHtml(filename + ".mp4")
 	return nil
