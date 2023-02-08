@@ -36,7 +36,9 @@ func FfmpegAddCover(video, img string) {
 	cmdarg := []string{"-i", video, "-i", img,
 		"-map", "0", "-map", "1",
 		"-disposition:1", "attached_pic",
-		"-c", "copy", outfile}
+		"-c", "copy",
+		"-movflags", "+faststart",
+		outfile}
 	var cmd *exec.Cmd = exec.Command("ffmpeg", cmdarg...)
 	log.Println(cmd)
 	err := cmd.Run()
