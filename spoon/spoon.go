@@ -108,7 +108,7 @@ func (m *Spoon) LoadJsVersion(ctx context.Context, conn inter.INet) error {
 	if err != nil {
 		return err
 	}
-	re, _ := regexp.Compile(`script src="(/src/js/main\.\w+\.chunk\.js)"`)
+	re, _ := regexp.Compile(`script src="/(src/js/main\.\w+\.chunk\.js)"`)
 	match := re.FindStringSubmatch(webText)
 	if match == nil || len(match) < 1 {
 		return errors.New("not found main.*.js")
