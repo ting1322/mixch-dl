@@ -16,12 +16,12 @@ import (
 )
 
 type Mixch struct {
-	ImageUrl string
-	Name     string
-	Id       string
-	M3u8Url  string
-	Chat     string
-	vd       *m3u8.Downloader
+	imgUrl  string
+	Name    string
+	Id      string
+	M3u8Url string
+	Chat    string
+	vd      *m3u8.Downloader
 }
 
 func New(text string) (*Mixch, error) {
@@ -98,6 +98,18 @@ func (m *Mixch) Download(ctx context.Context, netconn inter.INet, fio inter.IFs,
 		}()
 	}
 
+	coverCh := make(chan string, 1)
+	if m.imgUrl == "" {
+		coverCh <- ""
+	} else {
+		coverFileName, err := inter.DownloadThumbnail(ctx, netconn, fio, filename, m.imgUrl)
+		if err != nil {
+			coverCh <- ""
+		} else {
+			coverCh <- coverFileName
+		}
+	}
+
 	m.vd = &m3u8.Downloader{
 		Chat:    chat,
 		GuessTs: guessTs,
@@ -109,10 +121,15 @@ func (m *Mixch) Download(ctx context.Context, netconn inter.INet, fio inter.IFs,
 	}
 	if m.vd.GetFragCount() == 0 {
 		return inter.ErrNolive
-	} else {
-		generateHtml(filename + ".mp4")
-		return nil
 	}
+
+	coverFile := <-coverCh
+	if coverFile != "" {
+		inter.FfmpegAttachThumbnail(filename+".mp4", coverFile, 2)
+	}
+
+	generateHtml(filename + ".mp4")
+	return nil
 }
 
 func generateHtml(mp4 string) {
@@ -157,7 +174,7 @@ func (m *Mixch) parseLivePageJson(jsonText string) bool {
 		}
 		imageUrl, exist := broInfo["profile_image_url"].(string)
 		if exist {
-			m.ImageUrl = imageUrl
+			m.imgUrl = imageUrl
 		}
 	}
 

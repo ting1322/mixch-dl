@@ -1,6 +1,7 @@
 package inter
 
 import (
+	"fmt"
 	"log"
 	"math"
 	"os"
@@ -30,12 +31,12 @@ func FfmpegMerge(in, out string, fixts bool) {
 	}
 }
 
-func FfmpegAddCover(video, img string) {
+func FfmpegAttachThumbnail(video, img string, disposition int) {
 	log.Printf("attach cover image to video")
 	outfile := "temp-" + video
 	cmdarg := []string{"-i", video, "-i", img,
 		"-map", "0", "-map", "1",
-		"-disposition:1", "attached_pic",
+		fmt.Sprintf("-disposition:%d", disposition), "attached_pic",
 		"-c", "copy",
 		"-movflags", "+faststart",
 		outfile}
@@ -44,14 +45,19 @@ func FfmpegAddCover(video, img string) {
 	err := cmd.Run()
 	if err == nil {
 		bak := video + ".bak"
+		log.Printf("rename %v to %v\n", video, bak)
 		err = os.Rename(video, bak)
 		if err != nil {
+			log.Println("RENAME FAIL", err)
 			return
 		}
+		log.Printf("rename %v to %v\n", outfile, video)
 		err = os.Rename(outfile, video)
 		if err != nil {
+			log.Println("RENAME FAIL", err)
 			return
 		}
+		log.Printf("rm %v\n", bak)
 		os.Remove(bak)
 	}
 }

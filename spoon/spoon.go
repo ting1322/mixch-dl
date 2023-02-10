@@ -183,7 +183,7 @@ func (m *Spoon) Download(ctx context.Context, netconn inter.INet, fio inter.IFs,
 	if m.imgUrl == "" {
 		coverCh <- ""
 	} else {
-		coverFileName, err := downloadCover(ctx, netconn, fio, filename, m.imgUrl)
+		coverFileName, err := inter.DownloadThumbnail(ctx, netconn, fio, filename, m.imgUrl)
 		if err != nil {
 			coverCh <- ""
 		} else {
@@ -206,24 +206,10 @@ func (m *Spoon) Download(ctx context.Context, netconn inter.INet, fio inter.IFs,
 
 	coverFile := <-coverCh
 	if coverFile != "" {
-		inter.FfmpegAddCover(filename+".mp4", coverFile)
+		inter.FfmpegAttachThumbnail(filename+".mp4", coverFile, 1)
 	}
 	generateHtml(filename + ".mp4")
 	return nil
-}
-
-func downloadCover(ctx context.Context, netconn inter.INet, fio inter.IFs,
-	filename string, imgUrl string) (string, error) {
-	data, err := netconn.GetFile(ctx, imgUrl)
-	if err != nil {
-		return "", err
-	}
-	coverFile := filename + ".jpg"
-	err = fio.Save(coverFile, data)
-	if err != nil {
-		return "", err
-	}
-	return coverFile, nil
 }
 
 func generateHtml(mp4 string) {
