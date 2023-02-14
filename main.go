@@ -97,7 +97,6 @@ need a url as argument, for example:
 			// mixch sometimes response HTTP 403 even if live was started.
 			// downloadFlow will return ErrNoLive in this case.
 			// we need try again, until any video fragment has been download.
-			time.Sleep(5 * time.Second)
 			continue
 		}
 		if err != nil && loopAtFinish {
@@ -106,6 +105,7 @@ need a url as argument, for example:
 		if !loopAtFinish {
 			break
 		}
+		time.Sleep(5 * time.Second)
 	}
 }
 
