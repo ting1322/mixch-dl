@@ -185,6 +185,10 @@ func downloadM3U8(ctx context.Context, url string, conn inter.INet) (*M3U8, erro
 	if len(text) == 0 {
 		return nil, M3U8FormatError
 	}
+	if strings.Contains(text, "prerole/media") {
+		// debug output for spoon/jp
+		log.Println("m3u8 content:", text)
+	}
 	var time float64
 	m3u8 := &M3U8{}
 	for _, line := range strings.Split(text, "\n") {
