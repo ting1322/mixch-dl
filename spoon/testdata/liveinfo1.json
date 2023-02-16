@@ -1,0 +1,235 @@
+{
+  "status_code": 200,
+  "detail": "Success",
+  "results": [
+    {
+      "id": 35380050,
+      "author": {
+        "id": 312462303,
+        "nickname": "𓈒𓂂𖧷らら",
+        "tag": "lala_ukulele",
+        "top_impressions": [
+          1,
+          11
+        ],
+        "profile_url": "http://jp-cdn.spooncast.net/profiles/B/nAXlkBjFOwXrDM/30283b08-380c-4a2e-95ea-e4221a650a55.jpg",
+        "gender": 1,
+        "follow_status": 0,
+        "follower_count": 4540,
+        "country": "jp",
+        "following_count": 59,
+        "is_staff": false,
+        "is_vip": false,
+        "date_joined": "2020-07-22T15:29:08.971055Z"
+      },
+      "title": "癒しと元気を。一曲どうぞ◎",
+      "welcome_message": "来てくれてありがとう！\nリクエストはお便りボックスから\nお願いします！\n\ntwitter:lala_music_lele",
+      "type": 0,
+      "top_fans": [
+        {
+          "user": {
+            "id": 313518378,
+            "nickname": "♻️ｋｉｙｏ",
+            "tag": "p9854jzx",
+            "top_impressions": [
+              10,
+              9
+            ],
+            "description": "🐣🌱\n\n3/9",
+            "profile_url": "http://jp-cdn.spooncast.net/profiles/d/dveQZdPfaWglXB/887276a7-5b3c-4ae7-bba3-6017eb3e6157.jpg",
+            "gender": 0,
+            "follow_status": 0,
+            "follower_count": 183,
+            "following_count": 43,
+            "is_active": true,
+            "is_staff": false,
+            "is_vip": false,
+            "date_joined": "2021-02-14T10:12:17.405715Z",
+            "current_live": null,
+            "country": "jp",
+            "is_verified": false
+          },
+          "total_spoon": 110261
+        },
+        {
+          "user": {
+            "id": 314909609,
+            "nickname": "𝔍ᴾ⃝͙ᴊᴏᴋᴀ ᴛᴀɴ.",
+            "tag": "vyo5vkyl",
+            "top_impressions": [],
+            "description": "メン限多め（雑談たまに歌枠）\n\n月イチオープン歌枠目標\n\n𓈒𓂂𖧷\n\nSPOONは程々で\n投げたい時にしか投げません",
+            "profile_url": "http://jp-cdn.spooncast.net/profiles/5/dv5nW5JUaW5Dmj/e0b415c9-78c1-4e4f-9c7c-014a6534a9c1.jpg",
+            "gender": 0,
+            "follow_status": 0,
+            "follower_count": 250,
+            "following_count": 88,
+            "is_active": true,
+            "is_staff": false,
+            "is_vip": true,
+            "date_joined": "2022-04-24T06:42:21.896457Z",
+            "current_live": null,
+            "country": "jp",
+            "is_verified": false
+          },
+          "total_spoon": 58500
+        },
+        {
+          "user": {
+            "id": 313807268,
+            "nickname": "ざば＠火水お休み会社員",
+            "tag": "zabadak",
+            "top_impressions": [
+              9,
+              14
+            ],
+            "description": "「ざ」ばです。\n弾き語りが聴きたい。\n\n2021.7",
+            "profile_url": "http://jp-cdn.spooncast.net/profiles/g/5VxmMg8fz4Z3Vn/8c3f601e-bd93-4b84-8173-803f2249f5fe.jpg",
+            "gender": 2,
+            "follow_status": 0,
+            "follower_count": 75,
+            "following_count": 23,
+            "is_active": true,
+            "is_staff": false,
+            "is_vip": false,
+            "date_joined": "2021-04-28T03:31:35.990563Z",
+            "current_live": null,
+            "country": "jp",
+            "is_verified": false
+          },
+          "total_spoon": 42358
+        },
+        {
+          "user": {
+            "id": 311854452,
+            "nickname": "あつし",
+            "tag": "atsushi0710",
+            "top_impressions": [
+              3,
+              11
+            ],
+            "description": "",
+            "profile_url": "http://jp-cdn.spooncast.net/profiles/D/Aqak8DkHnd5D4Z/b3bd36de-ae68-4003-a670-51befc64b42f.jpg",
+            "gender": 0,
+            "follow_status": 0,
+            "follower_count": 150,
+            "following_count": 51,
+            "is_active": true,
+            "is_staff": false,
+            "is_vip": false,
+            "date_joined": "2020-03-15T14:26:40.816469Z",
+            "current_live": null,
+            "country": "jp",
+            "is_verified": false
+          },
+          "total_spoon": 22565
+        },
+        {
+          "user": {
+            "id": 314312857,
+            "nickname": "海斗-ｶｲﾄ-𓈒𓂂𖧷",
+            "tag": "vyo164yy",
+            "top_impressions": [],
+            "description": "最推し➤  𓈒𓂂𖧷\n推し➤𝓒☪︎⋆*",
+            "profile_url": "http://jp-cdn.spooncast.net/profiles/z/XL56WzLFBlQAXw/b042ba38-96b3-48e9-9720-bd8c9449eca7.jpg",
+            "gender": 0,
+            "follow_status": 0,
+            "follower_count": 32,
+            "following_count": 30,
+            "is_active": true,
+            "is_staff": false,
+            "is_vip": false,
+            "date_joined": "2021-09-06T00:57:14.809276Z",
+            "current_live": null,
+            "country": "jp",
+            "is_verified": false
+          },
+          "total_spoon": 14145
+        },
+        {
+          "user": {
+            "id": 315046317,
+            "nickname": "はじめての@帰宅中(低浮上)𓈒𓂂𖧷",
+            "tag": "soupner",
+            "top_impressions": [],
+            "description": "音聴楽、僕的には神企画です！！",
+            "profile_url": "http://jp-cdn.spooncast.net/profiles/M/D90plMdtAgboBJ/f1fb738f-93f3-475a-b019-46ab3b5ab33e.jpg",
+            "gender": 0,
+            "follow_status": 0,
+            "follower_count": 56,
+            "following_count": 171,
+            "is_active": true,
+            "is_staff": false,
+            "is_vip": false,
+            "date_joined": "2022-06-24T13:41:18.871595Z",
+            "current_live": null,
+            "country": "jp",
+            "is_verified": false
+          },
+          "total_spoon": 13625
+        }
+      ],
+      "url": "https://jp-hana-live.spooncast.net/cast/SyyqCI74/playlist.m3u8",
+      "url_hls": "https://jp-hana-live.spooncast.net/cast/SyyqCI74/playlist.m3u8",
+      "img_url": "http://jp-cdn.spooncast.net/lives/2023/02/16/07b5a4b6-670e-4dcf-b6c6-f256d11d2e7b.jpg",
+      "status": 1,
+      "stream_name": "SyyqCI74",
+      "manager_ids": [],
+      "like_count": 615,
+      "total_member_count": 176,
+      "member_count": 78,
+      "is_editors": true,
+      "tier": {
+        "name": "Orange_Choice",
+        "title": "Orange_Choice",
+        "order": 5
+      },
+      "is_vip": false,
+      "is_adult": false,
+      "is_like": false,
+      "is_mute": false,
+      "is_freeze": false,
+      "is_beginner": false,
+      "is_call": false,
+      "created": "2023-02-16T12:10:58.741572Z",
+      "closed": null,
+      "close_status": 0,
+      "categories": [
+        "music"
+      ],
+      "engine_name": "sori",
+      "live_call": null,
+      "is_live_call": false,
+      "os_type": null,
+      "is_save": false,
+      "is_join_now": false,
+      "protocol": "heimdallr2",
+      "tags": [
+        "弾き語り",
+        "のんびり",
+        "一緒に過ごしませんか"
+      ],
+      "msg_interval": 0,
+      "room_token": null,
+      "donation": 1,
+      "close_air_time": "2023-02-16T14:11:01.746196Z",
+      "hashtags": [
+        {
+          "id": 92,
+          "name": "のんびり"
+        },
+        {
+          "id": 76,
+          "name": "弾き語り"
+        },
+        {
+          "id": 673641,
+          "name": "一緒に過ごしませんか"
+        }
+      ],
+      "broadcast_extension_count": 0,
+      "spoon_aim": [],
+      "total_spoon_count": 621,
+      "sv": "heimdallr"
+    }
+  ]
+}

@@ -17,6 +17,7 @@ import (
 
 type Spoon struct {
 	Id           string
+	Name         string
 	liveId       string
 	M3u8Url      string
 	imgUrl       string
@@ -159,6 +160,11 @@ func (m *Spoon) parseLiveInfoPage(jsonText string) bool {
 		if title, exist := result.(jmap)["title"]; exist {
 			m.title = title.(string)
 		}
+		if author, exist := result.(jmap)["author"]; exist {
+			if nickname, exist := author.(jmap)["nickname"]; exist {
+				m.Name = nickname.(string)
+			}
+		}
 	}
 	return m.M3u8Url != ""
 }
@@ -208,6 +214,15 @@ func (m *Spoon) Download(ctx context.Context, netconn inter.INet, fio inter.IFs,
 	if coverFile != "" {
 		inter.FfmpegAttachThumbnail(filename+".mp4", coverFile, 1)
 	}
+	if m.title != "" {
+		meta := inter.FfmpegMeta{
+			Title: m.title,
+			Artist: m.Name,
+			Album: fmt.Sprintf("%v-%v", m.Name, m.title),
+		}
+		inter.FfmpegMetadata(filename+".mp4", meta)
+	}
+	inter.FfmpegFastStartMp4(filename + ".mp4")
 	generateHtml(filename + ".mp4")
 	return nil
 }

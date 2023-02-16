@@ -127,7 +127,12 @@ func (m *Mixch) Download(ctx context.Context, netconn inter.INet, fio inter.IFs,
 	if coverFile != "" {
 		inter.FfmpegAttachThumbnail(filename+".mp4", coverFile, 2)
 	}
+	if m.Name != "" {
+		meta := inter.FfmpegMeta{Artist: m.Name, Album: m.Name}
+		inter.FfmpegMetadata(filename+".mp4", meta)
+	}
 
+	inter.FfmpegFastStartMp4(filename + ".mp4")
 	generateHtml(filename + ".mp4")
 	return nil
 }

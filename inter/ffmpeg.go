@@ -21,13 +21,65 @@ func FfmpegMerge(in, out string, fixts bool) {
 	if fixts {
 		cmdarg = append(cmdarg, "-ss", "1ms")
 	}
-	cmdarg = append(cmdarg, "-movflags", "+faststart", out)
+	cmdarg = append(cmdarg, out)
 	var cmd *exec.Cmd = exec.Command("ffmpeg", cmdarg...)
 	log.Println(cmd)
 	err := cmd.Run()
 	if err == nil {
 		os.Remove(in)
 		//os.Rename(in, in[:len(in)-5])
+	}
+}
+
+type FfmpegMeta struct {
+	Title string
+	Artist string
+	Comment string
+	Album string
+}
+
+func FfmpegMetadata(video string, meta FfmpegMeta) {
+	outfile := "temp-" + video
+	cmdarg := []string{"-i", video}
+	if meta.Title != "" {
+		cmdarg = append(cmdarg, "-metadata", "title=\"" + meta.Title + "\"")
+	}
+	if meta.Artist != "" {
+		cmdarg = append(cmdarg, "-metadata", "artist=\"" + meta.Artist + "\"")
+	}
+	if meta.Comment != "" {
+		cmdarg = append(cmdarg, "-metadata", "comment=\"" + meta.Comment + "\"")
+	}
+	if meta.Album != "" {
+		cmdarg = append(cmdarg, "-metadata", "album=\"" + meta.Album + "\"")
+	}
+	cmdarg = append(cmdarg, "-c", "copy", outfile)
+	var cmd *exec.Cmd = exec.Command("ffmpeg", cmdarg...)
+	log.Println(cmd)
+	err := cmd.Run()
+	if err != nil {
+		log.Println("error at ffmpeg metadata", err)
+		return
+	}
+	replaceFile(outfile, video, video + ".bak")
+	if err != nil {
+		log.Println("error at ffmpeg metadata", err)
+	}
+}
+
+func FfmpegFastStartMp4(video string) {
+	outfile := "temp-" + video
+	cmdarg := []string{"-i", video, "-c", "copy", "-movflags", "+faststart", outfile}
+	var cmd *exec.Cmd = exec.Command("ffmpeg", cmdarg...)
+	log.Println(cmd)
+	err := cmd.Run()
+	if err != nil {
+		log.Println("error at mp4 faststart", err)
+		return
+	}
+	replaceFile(outfile, video, video + ".bak")
+	if err != nil {
+		log.Println("error at mp4 faststart", err)
 	}
 }
 
@@ -38,27 +90,17 @@ func FfmpegAttachThumbnail(video, img string, disposition int) {
 		"-map", "0", "-map", "1",
 		fmt.Sprintf("-disposition:%d", disposition), "attached_pic",
 		"-c", "copy",
-		"-movflags", "+faststart",
 		outfile}
 	var cmd *exec.Cmd = exec.Command("ffmpeg", cmdarg...)
 	log.Println(cmd)
 	err := cmd.Run()
-	if err == nil {
-		bak := video + ".bak"
-		log.Printf("rename %v to %v\n", video, bak)
-		err = os.Rename(video, bak)
-		if err != nil {
-			log.Println("RENAME FAIL", err)
-			return
-		}
-		log.Printf("rename %v to %v\n", outfile, video)
-		err = os.Rename(outfile, video)
-		if err != nil {
-			log.Println("RENAME FAIL", err)
-			return
-		}
-		log.Printf("rm %v\n", bak)
-		os.Remove(bak)
+	if err != nil {
+		log.Println("error attach thumbnail:", err)
+		return
+	}
+	replaceFile(outfile, video, video + ".bak")
+	if err != nil {
+		log.Println("error attach thumbnail:", err)
 	}
 }
 
@@ -81,4 +123,20 @@ func FfprobeTime(filename string) (time.Duration, error) {
 	}
 	floatTime := durationFloat * float64(time.Second)
 	return time.Duration(math.Round(floatTime)), nil
+}
+
+func replaceFile(src, dest, bak string) error {
+	log.Printf("rename %v to %v\n", dest, bak)
+	err := os.Rename(dest, bak)
+	if err != nil {
+		return fmt.Errorf("replace file: %w", err)
+	}
+	log.Printf("rename %v to %v\n", src, dest)
+	err = os.Rename(src, dest)
+	if err != nil {
+		return fmt.Errorf("replace file: %w", err)
+	}
+	log.Printf("rm %v\n", bak)
+	os.Remove(bak)
+	return nil
 }
