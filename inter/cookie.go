@@ -5,7 +5,6 @@ package inter
 import (
 	"log"
 	"net/http"
-	"net/http/cookiejar"
 	"net/url"
 
 	"github.com/zellyn/kooky"
@@ -26,6 +25,5 @@ func importCookie(client *http.Client, baseurl string) {
 	for idx, c := range cookies {
 		hcookies[idx] = &c.Cookie
 	}
-	client.Jar, _ = cookiejar.New(nil)
 	client.Jar.SetCookies(burl, hcookies)
 }

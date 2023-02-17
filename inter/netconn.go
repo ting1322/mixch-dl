@@ -10,6 +10,7 @@ import (
 	"log"
 	"mime/multipart"
 	"net/http"
+	"net/http/cookiejar"
 	"net/url"
 	"time"
 )
@@ -44,6 +45,7 @@ func (m *Net) GetHttpClient() *http.Client {
 
 func NewNetConn(baseurl string) *Net {
 	net := &Net{}
+	net.client.Jar, _ = cookiejar.New(nil)
 
 	if AutoLoadCookie {
 		importCookie(&net.client, baseurl)
@@ -118,7 +120,7 @@ func (m Net) DoReq(ctx context.Context, req *http.Request) ([]byte, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 	req = req.WithContext(ctx)
-	req.Header.Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:106.0) Gecko/20100101 Firefox/106.0")
+	req.Header.Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/110.0")
 	resp, err := m.client.Do(req)
 	if err != nil {
 		return nil, err
