@@ -197,9 +197,16 @@ func (m *Spoon) Download(ctx context.Context, netconn inter.INet, fio inter.IFs,
 		}
 	}
 
+	ignorePattern := func(urlText string) bool {
+		if strings.Contains(urlText, "/prerole/media") {
+			return true
+		}
+		return false
+	}
 	m.vd = &m3u8.Downloader{
-		Chat:    chat,
-		GuessTs: guessTs,
+		Chat:     chat,
+		GuessTs:  guessTs,
+		IgnoreTs: ignorePattern,
 	}
 	m.vd.DownloadMerge(ctx, m.M3u8Url, netconn, fio, filename)
 	cancel()
@@ -216,9 +223,9 @@ func (m *Spoon) Download(ctx context.Context, netconn inter.INet, fio inter.IFs,
 	}
 	if m.title != "" {
 		meta := inter.FfmpegMeta{
-			Title: m.title,
+			Title:  m.title,
 			Artist: m.Name,
-			Album: fmt.Sprintf("%v-%v", m.Name, m.title),
+			Album:  fmt.Sprintf("%v-%v", m.Name, m.title),
 		}
 		inter.FfmpegMetadata(filename+".mp4", meta)
 	}
