@@ -31,8 +31,8 @@ func (this *Chat) incCount() {
 	this.mu.Unlock()
 }
 
-func (c *Chat) Connect(ctx context.Context, netconn inter.INet, wssurl, filename string) {
-	writer, err := c.Fs.Create(filename + ".live_chat.json")
+func (this *Chat) Connect(ctx context.Context, netconn inter.INet, wssurl, filename string) {
+	writer, err := this.Fs.Create(filename + ".live_chat.json")
 	if err != nil {
 		log.Println(err)
 		return
@@ -46,13 +46,13 @@ func (c *Chat) Connect(ctx context.Context, netconn inter.INet, wssurl, filename
 		case <-ctx.Done():
 			return
 		default:
-			c.connectTry1(ctx, netconn, wssurl, writer, startTime)
+			this.connectTry1(ctx, netconn, wssurl, writer, startTime)
 		}
 	}
 
 }
 
-func (chat *Chat) connectTry1(ctx context.Context, netconn inter.INet, wssUrl string, writer io.Writer, startTime time.Time) {
+func (this *Chat) connectTry1(ctx context.Context, netconn inter.INet, wssUrl string, writer io.Writer, startTime time.Time) {
 	ctx2, cancel := context.WithTimeout(ctx, 15*time.Second)
 	log.Println("WSS (chat):", wssUrl)
 	dopt := &websocket.DialOptions{
@@ -87,24 +87,24 @@ func (chat *Chat) connectTry1(ctx context.Context, netconn inter.INet, wssUrl st
 			}
 
 			msgTime := time.Since(startTime).Milliseconds()
-			chat.parseChatData(data, writer, msgTime)
+			this.parseChatData(data, writer, msgTime)
 		}
 	}
 }
 
-func (chat *Chat) parseChatData(data []byte, writer io.Writer, msgTime int64) {
+func (this *Chat) parseChatData(data []byte, writer io.Writer, msgTime int64) {
 	var root []jmap
 	json.Unmarshal(data, &root)
 	for _, node := range root {
 		if t, exist := node["type"]; exist {
 			if t.(string) == "comment" {
-				chat.parseComment(node, writer, msgTime)
+				this.parseComment(node, writer, msgTime)
 			}
 		}
 	}
 }
 
-func (chat *Chat) parseComment(node jmap, writer io.Writer, msgTime int64) {
+func (this *Chat) parseComment(node jmap, writer io.Writer, msgTime int64) {
 	message, exist := node["message"]
 	if !exist {
 		log.Println("not found message")
@@ -116,7 +116,7 @@ func (chat *Chat) parseComment(node jmap, writer io.Writer, msgTime int64) {
 		log.Println("not found author")
 		return
 	}
-	chat.incCount()
+	this.incCount()
 	name := author.(jmap)["name"].(string)
 
 	ytc := mixch.ConvertToYtChat(msgTime, name, body)

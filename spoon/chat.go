@@ -29,51 +29,51 @@ type Record struct {
 	Msg    string
 }
 
-func (chat *Chat) SetTime(t time.Duration) {
-	chat.mu.Lock()
-	chat.startTime = time.Now().Add(-t)
-	chat.mu.Unlock()
+func (this *Chat) SetTime(t time.Duration) {
+	this.mu.Lock()
+	this.startTime = time.Now().Add(-t)
+	this.mu.Unlock()
 }
 
-func (chat *Chat) getStartTime() time.Time {
-	chat.mu.Lock()
-	defer chat.mu.Unlock()
-	return chat.startTime
+func (this *Chat) getStartTime() time.Time {
+	this.mu.Lock()
+	defer this.mu.Unlock()
+	return this.startTime
 }
 
-func (chat *Chat) Count() int {
-	chat.mu.Lock()
-	defer chat.mu.Unlock()
-	return chat.count
+func (this *Chat) Count() int {
+	this.mu.Lock()
+	defer this.mu.Unlock()
+	return this.count
 }
 
-func (chat *Chat) incCount() {
-	chat.mu.Lock()
-	chat.count++
-	chat.mu.Unlock()
+func (this *Chat) incCount() {
+	this.mu.Lock()
+	this.count++
+	this.mu.Unlock()
 }
 
-func (chat *Chat) Connect(ctx context.Context, wssUrl string, liveName string) {
-	writer, err := chat.Fs.Create(liveName + ".live_chat.json")
+func (this *Chat) Connect(ctx context.Context, wssUrl string, liveName string) {
+	writer, err := this.Fs.Create(liveName + ".live_chat.json")
 	if err != nil {
 		log.Println(err)
 		return
 	}
 	defer writer.Close()
 
-	chat.SetTime(0)
+	this.SetTime(0)
 
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		default:
-			chat.connectTry1(ctx, wssUrl, writer)
+			this.connectTry1(ctx, wssUrl, writer)
 		}
 	}
 }
 
-func (chat *Chat) connectTry1(ctx context.Context, wssUrl string, writer io.Writer) {
+func (this *Chat) connectTry1(ctx context.Context, wssUrl string, writer io.Writer) {
 	ctx2, cancel := context.WithTimeout(ctx, 15*time.Second)
 	log.Println("WSS:", wssUrl)
 	c, _, err := websocket.Dial(ctx2, wssUrl, nil)
@@ -88,9 +88,9 @@ func (chat *Chat) connectTry1(ctx context.Context, wssUrl string, writer io.Writ
 		log.Println("WSS: close")
 	}()
 
-	initMsg := fmt.Sprintf(`{"live_id": "%v", "appversion": "%v", "retry": 0, "reconnect": false, "event": "live_join", "type": "live_req", "useragent": "Web"}`, chat.liveId, chat.jsAppVersion)
+	initMsg := fmt.Sprintf(`{"live_id": "%v", "appversion": "%v", "retry": 0, "reconnect": false, "event": "live_join", "type": "live_req", "useragent": "Web"}`, this.liveId, this.jsAppVersion)
 
-	keepMsg := fmt.Sprintf(`{"live_id": "%v", "appversion": "%v", "event": "live_health", "type": "live_rpt", "useragent": "Web"}`, chat.liveId, chat.jsAppVersion)
+	keepMsg := fmt.Sprintf(`{"live_id": "%v", "appversion": "%v", "event": "live_health", "type": "live_rpt", "useragent": "Web"}`, this.liveId, this.jsAppVersion)
 
 	ctx2, cancel = context.WithTimeout(ctx, 15*time.Second)
 	c.Write(ctx2, websocket.MessageText, []byte(initMsg))
@@ -129,11 +129,11 @@ func (chat *Chat) connectTry1(ctx context.Context, wssUrl string, writer io.Writ
 					userName, body, success := decodeLiveMessage(jsonmap)
 					log.Println("(wss chat)", userName, body)
 					if success {
-						msgTime := time.Since(chat.getStartTime()).Milliseconds()
+						msgTime := time.Since(this.getStartTime()).Milliseconds()
 						ytc := ConvertToYtChat(msgTime, userName, body)
 						writer.Write(ytc)
 						writer.Write([]byte("\n"))
-						chat.incCount()
+						this.incCount()
 					}
 				}
 			}

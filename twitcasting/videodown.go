@@ -27,29 +27,29 @@ const (
 	AllFail
 )
 
-func (v *VDown) DownloadMerge(ctx context.Context, netconn inter.INet, wssurl string, filename string) {
+func (this *VDown) DownloadMerge(ctx context.Context, netconn inter.INet, wssurl string, filename string) {
 	tspartFilename := filename + ".ts.part"
-	v.downloadLoop(ctx, netconn, wssurl, tspartFilename)
-	if v.fs.Exist(tspartFilename) {
+	this.downloadLoop(ctx, netconn, wssurl, tspartFilename)
+	if this.fs.Exist(tspartFilename) {
 		inter.FfmpegMerge(tspartFilename, filename+".mp4", true)
 		inter.FfmpegFastStartMp4(filename + ".mp4")
 	}
 }
 
-func (v *VDown) GetFragCount() int64 {
-	v.mu.Lock()
-	defer v.mu.Unlock()
-	return v.fragCount
+func (this *VDown) GetFragCount() int64 {
+	this.mu.Lock()
+	defer this.mu.Unlock()
+	return this.fragCount
 }
 
-func (v *VDown) incFrag() {
-	v.mu.Lock()
-	v.fragCount++
-	v.mu.Unlock()
+func (this *VDown) incFrag() {
+	this.mu.Lock()
+	this.fragCount++
+	this.mu.Unlock()
 }
 
-func (v *VDown) downloadLoop(ctx context.Context, netconn inter.INet, wssurl, filename string) {
-	writer, err := v.fs.Create(filename)
+func (this *VDown) downloadLoop(ctx context.Context, netconn inter.INet, wssurl, filename string) {
+	writer, err := this.fs.Create(filename)
 	if err != nil {
 		log.Println("downloadLoop", err)
 		return
@@ -62,7 +62,7 @@ func (v *VDown) downloadLoop(ctx context.Context, netconn inter.INet, wssurl, fi
 		case <-ctx.Done():
 			return
 		default:
-			status, err := v.try1(ctx, netconn, wssurl, writer) // return until error
+			status, err := this.try1(ctx, netconn, wssurl, writer) // return until error
 			if ctx.Err() == context.Canceled {
 				// nothing
 			} else if err != nil {
@@ -80,7 +80,7 @@ func (v *VDown) downloadLoop(ctx context.Context, netconn inter.INet, wssurl, fi
 		}
 	}
 }
-func (v *VDown) try1(ctx context.Context, netconn inter.INet, wssurl string, writer io.Writer) (Status, error) {
+func (this *VDown) try1(ctx context.Context, netconn inter.INet, wssurl string, writer io.Writer) (Status, error) {
 	var status Status = AllFail
 	ctx2, cancel := context.WithTimeout(ctx, 15*time.Second)
 	log.Println("WSS(video):", wssurl)
@@ -108,7 +108,7 @@ func (v *VDown) try1(ctx context.Context, netconn inter.INet, wssurl string, wri
 			return status, nil
 		case <-statusTimer.C:
 			inter.ClearLine()
-			fmt.Printf("downloaded video fragment: %d, chat: %d\r", v.GetFragCount(), v.chat.GetCount())
+			fmt.Printf("downloaded video fragment: %d, chat: %d\r", this.GetFragCount(), this.chat.GetCount())
 			statusTimer.Reset(2 * time.Second)
 			break
 		default:
@@ -118,7 +118,7 @@ func (v *VDown) try1(ctx context.Context, netconn inter.INet, wssurl string, wri
 			if err != nil {
 				return status, fmt.Errorf("read websocket: %w", err)
 			}
-			v.incFrag()
+			this.incFrag()
 			status = SomeSuccess
 			writer.Write(data)
 		}

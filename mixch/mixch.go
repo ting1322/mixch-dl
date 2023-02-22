@@ -40,11 +40,11 @@ func New(text string) (*Mixch, error) {
 	return nil, errors.New("unknown mixch id")
 }
 
-func (m *Mixch) WaitStreamStart(ctx context.Context, conn inter.INet) error {
-	err := m.LoadUserPage(ctx, conn)
+func (this *Mixch) WaitStreamStart(ctx context.Context, conn inter.INet) error {
+	err := this.LoadUserPage(ctx, conn)
 	if errors.Is(err, inter.ErrNolive) {
 		log.Println("wait stream start......")
-		err = m.waitLiveLoop(ctx, 15*time.Second, conn)
+		err = this.waitLiveLoop(ctx, 15*time.Second, conn)
 		if err != nil {
 			return err
 		}
@@ -54,11 +54,11 @@ func (m *Mixch) WaitStreamStart(ctx context.Context, conn inter.INet) error {
 	return nil
 }
 
-func (m *Mixch) waitLiveLoop(ctx context.Context, interval time.Duration, conn inter.INet) error {
+func (this *Mixch) waitLiveLoop(ctx context.Context, interval time.Duration, conn inter.INet) error {
 	timer := time.NewTimer(interval)
 	for {
 		<-timer.C
-		err := m.LoadUserPage(ctx, conn)
+		err := this.LoadUserPage(ctx, conn)
 		if err == nil {
 			log.Println("live start.")
 			return nil
@@ -70,39 +70,39 @@ func (m *Mixch) waitLiveLoop(ctx context.Context, interval time.Duration, conn i
 	}
 }
 
-func (m *Mixch) LoadUserPage(ctx context.Context, conn inter.INet) error {
-	url := fmt.Sprintf("https://mixch.tv/u/%v/live", m.Id)
+func (this *Mixch) LoadUserPage(ctx context.Context, conn inter.INet) error {
+	url := fmt.Sprintf("https://mixch.tv/u/%v/live", this.Id)
 	webText, err := conn.GetWebPage(ctx, url)
 	if err != nil {
 		return err
 	}
 
-	if !m.parseLivePage(webText) || len(m.M3u8Url) == 0 {
+	if !this.parseLivePage(webText) || len(this.M3u8Url) == 0 {
 		return inter.ErrNolive
 	}
 
-	log.Println("m3u8 url:", m.M3u8Url)
+	log.Println("m3u8 url:", this.M3u8Url)
 
 	return nil
 }
 
-func (m *Mixch) Download(ctx context.Context, netconn inter.INet, fio inter.IFs, filename string) error {
+func (this *Mixch) Download(ctx context.Context, netconn inter.INet, fio inter.IFs, filename string) error {
 	ctx2, cancel := context.WithCancel(ctx)
 	chat := &Chat{Fs: fio}
 	var cs chan int
-	if len(m.Chat) > 0 {
+	if len(this.Chat) > 0 {
 		cs = make(chan int, 1)
 		go func() {
-			chat.Connect(ctx2, m.Chat, filename)
+			chat.Connect(ctx2, this.Chat, filename)
 			cs <- 1
 		}()
 	}
 
 	coverCh := make(chan string, 1)
-	if m.imgUrl == "" {
+	if this.imgUrl == "" {
 		coverCh <- ""
 	} else {
-		coverFileName, err := inter.DownloadThumbnail(ctx, netconn, fio, filename, m.imgUrl)
+		coverFileName, err := inter.DownloadThumbnail(ctx, netconn, fio, filename, this.imgUrl)
 		if err != nil {
 			coverCh <- ""
 		} else {
@@ -110,16 +110,16 @@ func (m *Mixch) Download(ctx context.Context, netconn inter.INet, fio inter.IFs,
 		}
 	}
 
-	m.vd = &m3u8.Downloader{
+	this.vd = &m3u8.Downloader{
 		Chat:    chat,
 		GuessTs: guessTs,
 	}
-	m.vd.DownloadMerge(ctx, m.M3u8Url, netconn, fio, filename)
+	this.vd.DownloadMerge(ctx, this.M3u8Url, netconn, fio, filename)
 	cancel()
 	if cs != nil {
 		<-cs
 	}
-	if m.vd.GetFragCount() == 0 {
+	if this.vd.GetFragCount() == 0 {
 		return inter.ErrNolive
 	}
 
@@ -127,8 +127,8 @@ func (m *Mixch) Download(ctx context.Context, netconn inter.INet, fio inter.IFs,
 	if coverFile != "" {
 		inter.FfmpegAttachThumbnail(filename+".mp4", coverFile, 2)
 	}
-	if m.Name != "" {
-		meta := inter.FfmpegMeta{Artist: m.Name, Album: m.Name}
+	if this.Name != "" {
+		meta := inter.FfmpegMeta{Artist: this.Name, Album: this.Name}
 		inter.FfmpegMetadata(filename+".mp4", meta)
 	}
 
@@ -142,13 +142,13 @@ func generateHtml(mp4 string) {
 	cplayer.ProcessVideo(option, mp4)
 }
 
-func (m *Mixch) parseLivePage(htmContent string) bool {
+func (this *Mixch) parseLivePage(htmContent string) bool {
 	prefix := "window.__INITIAL_JS_STATE__ = "
 	for _, line := range strings.Split(htmContent, "\n") {
 		if strings.HasPrefix(line, prefix) {
 			text := strings.TrimPrefix(line, prefix)
 			text = strings.TrimSuffix(text, ";")
-			return m.parseLivePageJson(text)
+			return this.parseLivePageJson(text)
 		}
 	}
 	return false
@@ -156,7 +156,7 @@ func (m *Mixch) parseLivePage(htmContent string) bool {
 
 type jmap = map[string]any
 
-func (m *Mixch) parseLivePageJson(jsonText string) bool {
+func (this *Mixch) parseLivePageJson(jsonText string) bool {
 	var jsonmap jmap
 	json.Unmarshal([]byte(jsonText), &jsonmap)
 	liveInfo, exist := jsonmap["liveInfo"].(jmap)
@@ -165,21 +165,21 @@ func (m *Mixch) parseLivePageJson(jsonText string) bool {
 		if !exist {
 			return false
 		}
-		m.M3u8Url = hls.(string)
+		this.M3u8Url = hls.(string)
 		chat, exist := liveInfo["chat"]
 		if exist {
-			m.Chat = chat.(string)
+			this.Chat = chat.(string)
 		}
 	}
 	broInfo, exist := jsonmap["broadcasterInfo"].(jmap)
 	if exist {
 		name, exist := broInfo["name"].(string)
 		if exist {
-			m.Name = name
+			this.Name = name
 		}
 		imageUrl, exist := broInfo["profile_image_url"].(string)
 		if exist {
-			m.imgUrl = imageUrl
+			this.imgUrl = imageUrl
 		}
 	}
 

@@ -21,8 +21,8 @@ func NewWorker(url string) *DownloadWorker {
 	return w
 }
 
-func (d *DownloadWorker) run(ctx context.Context, conn inter.INet) {
-	data, err := conn.GetFile(ctx, d.url)
+func (this *DownloadWorker) run(ctx context.Context, conn inter.INet) {
+	data, err := conn.GetFile(ctx, this.url)
 	result := DownResult{err, data}
-	d.complete <- result
+	this.complete <- result
 }

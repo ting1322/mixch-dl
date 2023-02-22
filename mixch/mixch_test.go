@@ -19,26 +19,26 @@ type FakeNetConn struct {
 	content string
 }
 
-func (me *FakeNetConn) GetFile(ctx context.Context, url string) ([]byte, error) {
-	text, err := me.GetWebPage(ctx, url)
+func (this *FakeNetConn) GetFile(ctx context.Context, url string) ([]byte, error) {
+	text, err := this.GetWebPage(ctx, url)
 	return []byte(text), err
 }
-func (me *FakeNetConn) GetWebPage(ctx context.Context, url string) (string, error) {
-	me.url = url
-	return me.content, nil
+func (this *FakeNetConn) GetWebPage(ctx context.Context, url string) (string, error) {
+	this.url = url
+	return this.content, nil
 }
-func (me *FakeNetConn) Post(ctx context.Context, url string, data map[string]string) (string, error) {
+func (this *FakeNetConn) Post(ctx context.Context, url string, data map[string]string) (string, error) {
 	return "", nil
 }
-func (me *FakeNetConn) PostForm(ctx context.Context, url string, data map[string]string) (string, error) {
+func (this *FakeNetConn) PostForm(ctx context.Context, url string, data map[string]string) (string, error) {
 	return "", nil
 }
 
-func (m *FakeNetConn) GetHttpClient() *http.Client {
+func (this *FakeNetConn) GetHttpClient() *http.Client {
 	return nil
 }
 
-func (m *FakeNetConn) GetCookie(name, domain, path string) (string, error) {
+func (this *FakeNetConn) GetCookie(name, domain, path string) (string, error) {
 	return "", nil
 }
 

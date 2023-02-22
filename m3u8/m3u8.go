@@ -15,6 +15,6 @@ type TsFile struct {
 	duration float64
 }
 
-func (ts *TsFile) String() string {
-	return fmt.Sprintf("#EXTINF:%v,\r\n%v", ts.duration, ts.name)
+func (this *TsFile) String() string {
+	return fmt.Sprintf("#EXTINF:%v,\r\n%v", this.duration, this.name)
 }

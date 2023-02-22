@@ -16,8 +16,8 @@ type IFs interface {
 type Fs struct {
 }
 
-func (me Fs) Save(filename string, data []byte) error {
-	file, err := me.Create(filename)
+func (this Fs) Save(filename string, data []byte) error {
+	file, err := this.Create(filename)
 	if err != nil {
 		return err
 	}
@@ -27,7 +27,7 @@ func (me Fs) Save(filename string, data []byte) error {
 	return nil
 }
 
-func (me Fs) Exist(filename string) bool {
+func (this Fs) Exist(filename string) bool {
 	_, err := os.Stat(filename)
 	if err != nil {
 		return false
@@ -35,12 +35,12 @@ func (me Fs) Exist(filename string) bool {
 	return true
 }
 
-func (me Fs) Create(filename string) (io.WriteCloser, error) {
+func (this Fs) Create(filename string) (io.WriteCloser, error) {
 	log.Println("CREATE:", filename)
 	return os.Create(filename)
 }
 
-func (me Fs) Delete(filename string) {
+func (this Fs) Delete(filename string) {
 	log.Println("DELETE:", filename)
 	os.Remove(filename)
 }

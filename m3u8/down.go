@@ -188,6 +188,13 @@ func (this *Downloader) downloadM3U8(ctx context.Context, url string, conn inter
 	}
 	var time float64
 	m3u8 := &M3U8{}
+
+	tsNeedSave := func(line string) bool {
+		return strings.HasSuffix(line, ".ts") &&
+			this.IgnoreTs != nil &&
+			!this.IgnoreTs(line)
+	}
+
 	for _, line := range strings.Split(text, "\n") {
 		if len(line) > 0 && line[0] == '#' {
 			if strings.HasPrefix(line, "#EXTINF:") {
@@ -206,7 +213,7 @@ func (this *Downloader) downloadM3U8(ctx context.Context, url string, conn inter
 				m3u8.end = true
 			}
 			continue
-		} else if strings.HasSuffix(line, ".ts") && !this.IgnoreTs(line) {
+		} else if tsNeedSave(line) {
 			ts := TsFile{}
 			ts.duration = time
 			ts.name = line
