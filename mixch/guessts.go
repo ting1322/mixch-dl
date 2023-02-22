@@ -9,7 +9,7 @@ import (
 
 func guessTs(firstTs, baseurl string, downloadedIdx int) []string {
 	urlList := make([]string, 0)
-	re, _ := regexp.Compile(`(.+-)(\d+)\.ts$`)
+	re, _ := regexp.Compile(`(.+-)(\d+)\.ts(\?.\w+=\w+)?`)
 	m := re.FindStringSubmatch(firstTs)
 	if m == nil || len(m) < 2 {
 		return urlList
@@ -27,8 +27,12 @@ func guessTs(firstTs, baseurl string, downloadedIdx int) []string {
 		startIdx = downloadedIdx + 1
 	}
 	log.Printf("REMEDY: downloaded video number:%v, current video number:%v, download:%v-%v\n", downloadedIdx, curIdx, startIdx, curIdx-1)
+	suffix := ""
+	if len(m) >= 3 {
+		suffix = m[3]
+	}
 	for i := startIdx; i < curIdx; i++ {
-		url := fmt.Sprintf("%v/%v%v.ts", baseurl, m[1], i)
+		url := fmt.Sprintf("%v/%v%v.ts%v", baseurl, m[1], i, suffix)
 		urlList = append(urlList, url)
 	}
 	return urlList

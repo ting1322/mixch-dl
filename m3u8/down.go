@@ -184,15 +184,16 @@ func (this *Downloader) downloadM3U8(ctx context.Context, url string, conn inter
 		return nil, err
 	}
 	if len(text) == 0 {
+		log.Println(text)
 		return nil, M3U8FormatError
 	}
 	var time float64
 	m3u8 := &M3U8{}
 
 	tsNeedSave := func(line string) bool {
-		return strings.HasSuffix(line, ".ts") &&
-			this.IgnoreTs != nil &&
-			!this.IgnoreTs(line)
+		isTs := strings.Contains(line, ".ts")
+		ignore := this.IgnoreTs != nil && this.IgnoreTs(line)
+		return isTs && !ignore
 	}
 
 	for _, line := range strings.Split(text, "\n") {
@@ -221,6 +222,7 @@ func (this *Downloader) downloadM3U8(ctx context.Context, url string, conn inter
 		}
 	}
 	if m3u8.version == 0 || len(m3u8.tsList) == 0 {
+		log.Println(text)
 		return nil, M3U8FormatError
 	}
 	return m3u8, nil
