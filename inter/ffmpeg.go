@@ -13,7 +13,7 @@ import (
 
 func FfmpegMerge(in, out string, fixts bool) {
 	log.Printf("merge %v file by ffmpeg\n", out)
-	cmdarg := []string{"-i", in, "-c", "copy"}
+	cmdarg := []string{"-y", "-i", in, "-c", "copy"}
 	if fixts {
 		cmdarg = append(cmdarg, "-bsf", "setts=ts=TS-STARTPTS")
 	}
@@ -40,7 +40,7 @@ type FfmpegMeta struct {
 
 func FfmpegMetadata(video string, meta FfmpegMeta) {
 	outfile := "temp-" + video
-	cmdarg := []string{"-i", video}
+	cmdarg := []string{"-y", "-i", video}
 	if meta.Title != "" {
 		cmdarg = append(cmdarg, "-metadata", "title=\"" + meta.Title + "\"")
 	}
@@ -69,7 +69,7 @@ func FfmpegMetadata(video string, meta FfmpegMeta) {
 
 func FfmpegFastStartMp4(video string) {
 	outfile := "temp-" + video
-	cmdarg := []string{"-i", video, "-c", "copy", "-movflags", "+faststart", outfile}
+	cmdarg := []string{"-y", "-i", video, "-c", "copy", "-movflags", "+faststart", outfile}
 	var cmd *exec.Cmd = exec.Command("ffmpeg", cmdarg...)
 	log.Println(cmd)
 	err := cmd.Run()
@@ -86,7 +86,7 @@ func FfmpegFastStartMp4(video string) {
 func FfmpegAttachThumbnail(video, img string, disposition int) {
 	log.Printf("attach cover image to video")
 	outfile := "temp-" + video
-	cmdarg := []string{"-i", video, "-i", img,
+	cmdarg := []string{"-y", "-i", video, "-i", img,
 		"-map", "0", "-map", "1",
 		fmt.Sprintf("-disposition:%d", disposition), "attached_pic",
 		"-c", "copy",
