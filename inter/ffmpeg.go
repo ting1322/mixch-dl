@@ -11,6 +11,11 @@ import (
 	"time"
 )
 
+var (
+	ffmpegName string = "ffmpeg"
+	ffprobeName string = "ffprobe"
+)
+
 func FfmpegMerge(in, out string, fixts bool) {
 	log.Printf("merge %v file by ffmpeg\n", out)
 	cmdarg := []string{"-y", "-i", in, "-c", "copy"}
@@ -22,7 +27,7 @@ func FfmpegMerge(in, out string, fixts bool) {
 		cmdarg = append(cmdarg, "-ss", "1ms")
 	}
 	cmdarg = append(cmdarg, out)
-	var cmd *exec.Cmd = exec.Command("ffmpeg", cmdarg...)
+	var cmd *exec.Cmd = exec.Command(ffmpegName, cmdarg...)
 	log.Println(cmd)
 	err := cmd.Run()
 	if err == nil {
@@ -54,7 +59,7 @@ func FfmpegMetadata(video string, meta FfmpegMeta) {
 		cmdarg = append(cmdarg, "-metadata", "album=\"" + meta.Album + "\"")
 	}
 	cmdarg = append(cmdarg, "-c", "copy", outfile)
-	var cmd *exec.Cmd = exec.Command("ffmpeg", cmdarg...)
+	var cmd *exec.Cmd = exec.Command(ffmpegName, cmdarg...)
 	log.Println(cmd)
 	err := cmd.Run()
 	if err != nil {
@@ -70,7 +75,7 @@ func FfmpegMetadata(video string, meta FfmpegMeta) {
 func FfmpegFastStartMp4(video string) {
 	outfile := "temp-" + video
 	cmdarg := []string{"-y", "-i", video, "-c", "copy", "-movflags", "+faststart", outfile}
-	var cmd *exec.Cmd = exec.Command("ffmpeg", cmdarg...)
+	var cmd *exec.Cmd = exec.Command(ffmpegName, cmdarg...)
 	log.Println(cmd)
 	err := cmd.Run()
 	if err != nil {
@@ -91,7 +96,7 @@ func FfmpegAttachThumbnail(video, img string, disposition int) {
 		fmt.Sprintf("-disposition:%d", disposition), "attached_pic",
 		"-c", "copy",
 		outfile}
-	var cmd *exec.Cmd = exec.Command("ffmpeg", cmdarg...)
+	var cmd *exec.Cmd = exec.Command(ffmpegName, cmdarg...)
 	log.Println(cmd)
 	err := cmd.Run()
 	if err != nil {
@@ -108,7 +113,7 @@ func FfprobeTime(filename string) (time.Duration, error) {
 	cmdarg := []string{"-v", "error",
 		"-show_entries", "format=duration", "-of",
 		"default=noprint_wrappers=1:nokey=1", filename}
-	var cmd *exec.Cmd = exec.Command("ffprobe", cmdarg...)
+	var cmd *exec.Cmd = exec.Command(ffprobeName, cmdarg...)
 	log.Println(cmd)
 	outData, err := cmd.Output()
 	text := strings.Trim(string(outData), " \r\n")
