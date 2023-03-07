@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"mime/multipart"
 	"net/http"
 	"net/http/cookiejar"
@@ -35,7 +34,7 @@ type Net struct {
 
 func logNetln(v ...any) {
 	if LogNetwork {
-		log.Println(v...)
+		LogMsg(true, fmt.Sprint(v...))
 	}
 }
 
@@ -54,7 +53,7 @@ func NewNetConn(baseurl string) *Net {
 }
 
 func (this Net) Post(ctx context.Context, urltest string, data map[string]string) (string, error) {
-	logNetln("POST:", urltest)
+	logNetln("POST: ", urltest)
 	var b bytes.Buffer
 	buffer := bufio.NewWriter(&b)
 	first := true
@@ -75,7 +74,7 @@ func (this Net) Post(ctx context.Context, urltest string, data map[string]string
 }
 
 func (this Net) PostForm(ctx context.Context, urltest string, data map[string]string) (string, error) {
-	logNetln("POST-FORM:", urltest)
+	logNetln("POST-FORM: ", urltest)
 	var b bytes.Buffer
 	w := multipart.NewWriter(&b)
 	for k, v := range data {
@@ -98,7 +97,7 @@ func (this Net) GetWebPage(ctx context.Context, url string) (string, error) {
 }
 
 func (this Net) GetFile(ctx context.Context, url string) ([]byte, error) {
-	logNetln("GET:", url)
+	logNetln("GET: ", url)
 	req, _ := http.NewRequest("GET", url, nil)
 	return this.DoReq(ctx, req)
 }
@@ -126,7 +125,7 @@ func (this Net) DoReq(ctx context.Context, req *http.Request) ([]byte, error) {
 		return nil, err
 	}
 	if resp.StatusCode != http.StatusOK {
-		log.Printf("http response: %v\n", resp.Status)
+		LogMsg(true, fmt.Sprintf("http response: %v", resp.Status))
 		return nil, fmt.Errorf("%w, Status Code: %v", ErrHttpNotOk, resp.StatusCode)
 	}
 

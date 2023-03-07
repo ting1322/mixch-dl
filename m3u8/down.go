@@ -19,7 +19,7 @@ type Downloader struct {
 	seq            int
 	timer          *time.Timer
 	m3u8           *M3U8
-	fragCount      int64
+	fragCount      int
 	totalTime      time.Duration
 	Chat           ChatDownloader
 	mu             sync.Mutex
@@ -30,7 +30,7 @@ type Downloader struct {
 	IgnoreTs       func(urlText string) bool // ts line in m3u8
 }
 
-func (this *Downloader) GetFragCount() int64 {
+func (this *Downloader) GetFragCount() int {
 	this.mu.Lock()
 	defer this.mu.Unlock()
 	return this.fragCount
@@ -58,7 +58,7 @@ func (this *Downloader) tryDownloadLostFrag(ctx context.Context, tsw io.Writer, 
 			this.incFrag()
 			successCount++
 		} else {
-			log.Println("frag fail:", w.url)
+			inter.LogMsg(false, "download missing fragment with error: "+w.url)
 			failCount++
 		}
 	}
@@ -66,7 +66,8 @@ func (this *Downloader) tryDownloadLostFrag(ctx context.Context, tsw io.Writer, 
 	if err == nil {
 		this.totalTime = t
 	}
-	log.Printf("REMEDY: success:%v, fail:%v, currentTime:%v\n", successCount, failCount, this.totalTime)
+	inter.LogMsg(false, fmt.Sprintf("REMEDY: success:%v, fail:%v, currentTime:%v\n",
+		successCount, failCount, this.totalTime))
 }
 
 func (this *Downloader) downloadAndWrite(ctx context.Context, m3u8Url string, tsw io.Writer) error {
@@ -93,7 +94,7 @@ func (this *Downloader) downloadAndWrite(ctx context.Context, m3u8Url string, ts
 			seq := m3u8.sequence + idx
 			if seq <= this.seq {
 				if seq < this.seq-15 {
-					log.Printf("m3u8 sequence reset, orig:%v, current:%v", this.seq, seq)
+					inter.LogMsg(true, fmt.Sprintf("m3u8 sequence reset, orig:%v, current:%v", this.seq, seq))
 				} else {
 					continue
 				}
@@ -111,7 +112,7 @@ func (this *Downloader) downloadAndWrite(ctx context.Context, m3u8Url string, ts
 			tsw.Write(data)
 			this.totalTime += time.Duration(ts.duration * float64(time.Second))
 			if (this.seq+1) != seq && this.seq != 0 {
-				log.Printf("some video fragnment missing, re-sync chat log")
+				inter.LogMsg(true, "some video fragnment missing, re-sync chat log")
 				this.Chat.SetTime(this.totalTime)
 			}
 			this.seq = seq
@@ -139,9 +140,7 @@ func (this *Downloader) downloadMergeLoop(ctx context.Context, m3u8Url string) {
 			if err == nil {
 				retry = 30
 				this.timer.Reset(1500 * time.Millisecond)
-
-				fmt.Printf("downloaded video fragment: %d, duration: %v, chat: %v\n", this.GetFragCount(),
-					this.totalTime, this.Chat.Count())
+				inter.LogProgress(this.GetFragCount(), this.Chat.Count(), this.totalTime)
 			} else if errors.Is(err, M3U8FormatError) || errors.Is(err, inter.ErrHttpNotOk) {
 				log.Printf("stream end? %v\n", err)
 				retry = 0
@@ -154,8 +153,7 @@ func (this *Downloader) downloadMergeLoop(ctx context.Context, m3u8Url string) {
 			}
 			if (this.m3u8 != nil && this.m3u8.end) || retry <= 0 {
 				this.timer.Stop()
-				fmt.Println()
-				log.Println("download finish")
+				inter.LogStatus(inter.STATUS_Finish)
 				return
 			}
 			<-this.timer.C
@@ -184,7 +182,7 @@ func (this *Downloader) downloadM3U8(ctx context.Context, url string, conn inter
 		return nil, err
 	}
 	if len(text) == 0 {
-		log.Println(text)
+		inter.LogMsg(true, "m3u8 empty")
 		return nil, M3U8FormatError
 	}
 	var time float64
@@ -222,7 +220,7 @@ func (this *Downloader) downloadM3U8(ctx context.Context, url string, conn inter
 		}
 	}
 	if m3u8.version == 0 || len(m3u8.tsList) == 0 {
-		log.Println(text)
+		inter.LogMsg(true, "m3u8 parse error: "+text)
 		return nil, M3U8FormatError
 	}
 	return m3u8, nil

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"inter"
 	"io"
-	"log"
 	"sync"
 	"time"
 
@@ -53,7 +52,7 @@ func (this *Chat) incCount() {
 func (this *Chat) Connect(ctx context.Context, wssUrl string, liveName string) {
 	writer, err := this.Fs.Create(liveName + ".live_chat.json")
 	if err != nil {
-		log.Println(err)
+		inter.LogMsg(false, fmt.Sprintf("WSS (chat) err: %v", err))
 		return
 	}
 	defer writer.Close()
@@ -72,23 +71,23 @@ func (this *Chat) Connect(ctx context.Context, wssUrl string, liveName string) {
 
 func (this *Chat) connectTry1(ctx context.Context, wssUrl string, writer io.Writer) {
 	ctx2, cancel := context.WithTimeout(ctx, 15*time.Second)
-	log.Println("WSS:", wssUrl)
+	inter.LogMsg(false, fmt.Sprintf("WSS (chat): %v", wssUrl))
 	c, _, err := websocket.Dial(ctx2, wssUrl, nil)
 	cancel()
 	if err != nil {
-		log.Println(err)
+		inter.LogMsg(false, fmt.Sprintf("WSS (chat): %v", err))
 		return
 	}
 
 	defer func() {
 		c.Close(websocket.StatusNormalClosure, "")
-		log.Println("WSS: close")
+		inter.LogMsg(false, "WSS (chat): close")
 	}()
 
 	for {
 		select {
 		case <-ctx.Done():
-			log.Println("try1 done")
+			inter.LogMsg(true, "WSS (chat): in connectTry1: done")
 			return
 		default:
 			ctx2, cancel := context.WithTimeout(ctx, 30*time.Second)
@@ -97,7 +96,7 @@ func (this *Chat) connectTry1(ctx context.Context, wssUrl string, writer io.Writ
 			if ctx.Err() == context.Canceled {
 				return
 			} else if err != nil {
-				log.Println("mixch/chat connectTry1", err)
+				inter.LogMsg(false, fmt.Sprintf("WSS (chat): in connectTry1 error: %v", err))
 				return
 			}
 

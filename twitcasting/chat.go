@@ -3,9 +3,9 @@ package twitcasting
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"inter"
 	"io"
-	"log"
 	"mixch"
 	"sync"
 	"time"
@@ -16,10 +16,10 @@ import (
 type Chat struct {
 	Fs    inter.IFs
 	mu    sync.Mutex
-	count int64
+	count int
 }
 
-func (this *Chat) GetCount() int64 {
+func (this *Chat) GetCount() int {
 	this.mu.Lock()
 	defer this.mu.Unlock()
 	return this.count
@@ -34,7 +34,7 @@ func (this *Chat) incCount() {
 func (this *Chat) Connect(ctx context.Context, netconn inter.INet, wssurl, filename string) {
 	writer, err := this.Fs.Create(filename + ".live_chat.json")
 	if err != nil {
-		log.Println(err)
+		inter.LogMsg(false, fmt.Sprintf("WSS (chat): in Connect: %v", err))
 		return
 	}
 	defer writer.Close()
@@ -54,26 +54,26 @@ func (this *Chat) Connect(ctx context.Context, netconn inter.INet, wssurl, filen
 
 func (this *Chat) connectTry1(ctx context.Context, netconn inter.INet, wssUrl string, writer io.Writer, startTime time.Time) {
 	ctx2, cancel := context.WithTimeout(ctx, 15*time.Second)
-	log.Println("WSS (chat):", wssUrl)
+	inter.LogMsg(false, fmt.Sprintf("WSS (chat): %v", wssUrl))
 	dopt := &websocket.DialOptions{
 		HTTPClient: netconn.GetHttpClient(),
 	}
 	c, _, err := websocket.Dial(ctx2, wssUrl, dopt)
 	cancel()
 	if err != nil {
-		log.Println(err)
+		inter.LogMsg(false, fmt.Sprintf("WSS (chat): in connectTry1: %v", err))
 		return
 	}
 
 	defer func() {
 		c.Close(websocket.StatusNormalClosure, "")
-		log.Println("WSS (chat): close")
+		inter.LogMsg(false, fmt.Sprintf("WSS (chat): close"))
 	}()
 
 	for {
 		select {
 		case <-ctx.Done():
-			log.Println("try1 done")
+			inter.LogMsg(false, fmt.Sprintf("WSS (chat): in connectTry1: done"))
 			return
 		default:
 			ctx2, cancel := context.WithTimeout(ctx, 30*time.Second)
@@ -82,7 +82,7 @@ func (this *Chat) connectTry1(ctx context.Context, netconn inter.INet, wssUrl st
 			if ctx.Err() == context.Canceled {
 				return
 			} else if err != nil {
-				log.Println("connectTry1", err)
+				inter.LogMsg(false, fmt.Sprintf("WSS (chat): in connectTry1: %v", err))
 				return
 			}
 
@@ -107,13 +107,13 @@ func (this *Chat) parseChatData(data []byte, writer io.Writer, msgTime int64) {
 func (this *Chat) parseComment(node jmap, writer io.Writer, msgTime int64) {
 	message, exist := node["message"]
 	if !exist {
-		log.Println("not found message")
+		inter.LogMsg(false, fmt.Sprintf("WSS (chat): in parseComment: not found message in json"))
 		return
 	}
 	body := message.(string)
 	author, exist := node["author"]
 	if !exist {
-		log.Println("not found author")
+		inter.LogMsg(false, fmt.Sprintf("WSS (chat): in parseComment: not found author in json"))
 		return
 	}
 	this.incCount()

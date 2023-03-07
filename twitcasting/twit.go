@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"inter"
-	"log"
 	"net/url"
 	"regexp"
 	"strings"
@@ -43,7 +42,7 @@ func New(text, pass string) *Live {
 func (this *Live) WaitStreamStart(ctx context.Context, conn inter.INet) error {
 	err := this.LoadUserPage(ctx, conn)
 	if errors.Is(err, inter.ErrNolive) {
-		log.Println("wait stream start......")
+		inter.LogMsg(false, "wait stream start......")
 		err = this.waitLiveLoop(ctx, 10*time.Second, conn)
 		if err != nil {
 			return err
@@ -60,7 +59,7 @@ func (this *Live) waitLiveLoop(ctx context.Context, interval time.Duration, conn
 		<-timer.C
 		err := this.LoadUserPage(ctx, conn)
 		if err == nil {
-			log.Println("live start.")
+			inter.LogMsg(false, "live start.")
 			return nil
 		}
 		if !errors.Is(err, inter.ErrNolive) {
@@ -115,7 +114,7 @@ func (this *Live) LoadUserPage(ctx context.Context, conn inter.INet) error {
 	pdata["movie_id"] = this.MovieId
 	if this.wpass != "" {
 		pdata["password"] = this.wpass
-		log.Println("use password:", this.wpass)
+		inter.LogMsg(true, "use password:"+this.wpass)
 	}
 	webText, err = conn.PostForm(ctx, "https://twitcasting.tv/eventpubsuburl.php", pdata)
 	if err != nil {

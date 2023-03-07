@@ -2,7 +2,7 @@ package mixch
 
 import (
 	"fmt"
-	"log"
+	"inter"
 	"regexp"
 	"strconv"
 )
@@ -26,7 +26,7 @@ func guessTs(firstTs, baseurl string, downloadedIdx int) []string {
 	if startIdx < downloadedIdx+1 {
 		startIdx = downloadedIdx + 1
 	}
-	log.Printf("REMEDY: downloaded video number:%v, current video number:%v, download:%v-%v\n", downloadedIdx, curIdx, startIdx, curIdx-1)
+	inter.LogMsg(false, fmt.Sprintf("REMEDY: downloaded video number:%v, current video number:%v, download:%v-%v\n", downloadedIdx, curIdx, startIdx, curIdx-1))
 	suffix := ""
 	if len(m) >= 3 {
 		suffix = m[3]

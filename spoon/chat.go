@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"inter"
 	"io"
-	"log"
 	"sync"
 	"time"
 
@@ -56,7 +55,7 @@ func (this *Chat) incCount() {
 func (this *Chat) Connect(ctx context.Context, wssUrl string, liveName string) {
 	writer, err := this.Fs.Create(liveName + ".live_chat.json")
 	if err != nil {
-		log.Println(err)
+		inter.LogMsg(false, fmt.Sprintf("WSS (chat): in Connect: %v", err))
 		return
 	}
 	defer writer.Close()
@@ -75,17 +74,17 @@ func (this *Chat) Connect(ctx context.Context, wssUrl string, liveName string) {
 
 func (this *Chat) connectTry1(ctx context.Context, wssUrl string, writer io.Writer) {
 	ctx2, cancel := context.WithTimeout(ctx, 15*time.Second)
-	log.Println("WSS:", wssUrl)
+	inter.LogMsg(false, fmt.Sprintf("WSS (chat): %v", wssUrl))
 	c, _, err := websocket.Dial(ctx2, wssUrl, nil)
 	cancel()
 	if err != nil {
-		log.Println(err)
+		inter.LogMsg(false, fmt.Sprintf("WSS (chat): in connectTry1: %v", err))
 		return
 	}
 
 	defer func() {
 		c.Close(websocket.StatusNormalClosure, "")
-		log.Println("WSS: close")
+		inter.LogMsg(false, "WSS (chat): close")
 	}()
 
 	initMsg := fmt.Sprintf(`{"live_id": "%v", "appversion": "%v", "retry": 0, "reconnect": false, "event": "live_join", "type": "live_req", "useragent": "Web"}`, this.liveId, this.jsAppVersion)
@@ -99,7 +98,7 @@ func (this *Chat) connectTry1(ctx context.Context, wssUrl string, writer io.Writ
 	for {
 		select {
 		case <-ctx.Done():
-			log.Println("try1 done")
+			inter.LogMsg(false, "WSS (chat): in connectTry1: done")
 			return
 
 		default:
@@ -109,7 +108,7 @@ func (this *Chat) connectTry1(ctx context.Context, wssUrl string, writer io.Writ
 			if ctx.Err() == context.Canceled {
 				return
 			} else if err != nil {
-				log.Println("mixch/chat connectTry1", err)
+				inter.LogMsg(false, fmt.Sprintf("WSS (chat): in connectTry1: %v", err))
 				return
 			}
 			//log.Println("(wss chat)", "receive", string(data))
@@ -121,13 +120,13 @@ func (this *Chat) connectTry1(ctx context.Context, wssUrl string, writer io.Writ
 			if event, exist := jsonmap["event"]; exist {
 				evtStr := event.(string)
 				if evtStr == "live_health" {
-					log.Println("(wss chat)", "keep alive")
+					inter.LogMsg(false, "WSS (chat): keep alive")
 					ctx2, cancel = context.WithTimeout(ctx, 15*time.Second)
 					c.Write(ctx2, websocket.MessageText, []byte(keepMsg))
 					cancel()
 				} else if evtStr == "live_message" {
 					userName, body, success := decodeLiveMessage(jsonmap)
-					log.Println("(wss chat)", userName, body)
+					inter.LogMsg(false, fmt.Sprintf("WSS (chat): msg: %v: %v", userName, body))
 					if success {
 						msgTime := time.Since(this.getStartTime()).Milliseconds()
 						ytc := ConvertToYtChat(msgTime, userName, body)
@@ -135,6 +134,17 @@ func (this *Chat) connectTry1(ctx context.Context, wssUrl string, writer io.Writ
 						writer.Write([]byte("\n"))
 						this.incCount()
 					}
+				} else if evtStr == "use_item" {
+					inter.LogMsg(true, "WSS (chat): use_item")
+					// skip
+				} else if evtStr == "lazy_update" ||
+					evtStr == "live_like" ||
+					evtStr == "live_rank" ||
+					evtStr == "live_join" ||
+					evtStr == "live_update" {
+					// skip
+				} else {
+					inter.LogMsg(true, fmt.Sprintf("WSS (chat): unknown msg: %v", string(data)))
 				}
 			}
 		}

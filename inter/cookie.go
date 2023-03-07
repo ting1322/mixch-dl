@@ -3,7 +3,7 @@
 package inter
 
 import (
-	"log"
+	"fmt"
 	"net/http"
 	"net/url"
 
@@ -16,10 +16,11 @@ func importCookie(client *http.Client, baseurl string) {
 	// applies the passed filters "Valid", "DomainHasSuffix()" and "Name()" in order to the cookies
 	burl, err := url.Parse(baseurl)
 	if err != nil {
-		log.Fatal("setting cookie, parse base url with error:", err)
+		LogMsg(false, fmt.Sprintf("setting cookie, parse base url with error: %v", err))
+		return
 	}
 	cookies := kooky.ReadCookies(kooky.Valid, kooky.DomainHasSuffix(burl.Host))
-	log.Printf("load cookies from browser, found: %v", len(cookies))
+	LogMsg(false, fmt.Sprintf("load cookies from browser, found: %v", len(cookies)))
 
 	hcookies := make([]*http.Cookie, len(cookies))
 	for idx, c := range cookies {

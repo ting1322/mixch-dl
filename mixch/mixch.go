@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"inter"
-	"log"
 	"m3u8"
 	"regexp"
 	"strings"
@@ -43,7 +42,7 @@ func New(text string) (*Mixch, error) {
 func (this *Mixch) WaitStreamStart(ctx context.Context, conn inter.INet) error {
 	err := this.LoadUserPage(ctx, conn)
 	if errors.Is(err, inter.ErrNolive) {
-		log.Println("wait stream start......")
+		inter.LogMsg(false, "wait stream start......")
 		err = this.waitLiveLoop(ctx, 15*time.Second, conn)
 		if err != nil {
 			return err
@@ -60,7 +59,7 @@ func (this *Mixch) waitLiveLoop(ctx context.Context, interval time.Duration, con
 		<-timer.C
 		err := this.LoadUserPage(ctx, conn)
 		if err == nil {
-			log.Println("live start.")
+			inter.LogMsg(false,"live start.")
 			return nil
 		}
 		if !errors.Is(err, inter.ErrNolive) {
@@ -81,7 +80,7 @@ func (this *Mixch) LoadUserPage(ctx context.Context, conn inter.INet) error {
 		return inter.ErrNolive
 	}
 
-	log.Println("m3u8 url:", this.M3u8Url)
+	inter.LogMsg(false, fmt.Sprint("m3u8 url:", this.M3u8Url))
 
 	return nil
 }

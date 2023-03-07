@@ -17,13 +17,12 @@ import (
 )
 
 var (
-	programVersion       string           = "1.x-dev"
-	downloader           *m3u8.Downloader = &m3u8.Downloader{}
-	fio                  inter.IFs        = &inter.Fs{}
-	netconn              inter.INet
-	pass                 string
-	loopAtFinish         bool
-	argCookieFromBrowser bool
+	programVersion string           = "1.x-dev"
+	downloader     *m3u8.Downloader = &m3u8.Downloader{}
+	fio            inter.IFs        = &inter.Fs{}
+	netconn        inter.INet
+	pass           string
+	loopAtFinish   bool
 )
 
 func parseTime(text string) (time.Time, error) {
@@ -45,18 +44,19 @@ func main() {
 	flag.StringVar(&pass, "pass", "", "password for twitcasting")
 	flag.BoolVar(&loopAtFinish, "loop", false, "continue run even if download finish")
 	flag.BoolVar(&argVersion, "version", false, "show program version and exit.")
-	flag.BoolVar(&argCookieFromBrowser, "cookies-from-browser", false, "do not load cookie from browser. (default enable)")
+	flag.BoolVar(&inter.AutoLoadCookie, "cookies-from-browser", false, "do not load cookie from browser. (default enable)")
+	flag.BoolVar(&inter.JsonOutput, "json", false, "output message with json format")
+	flag.BoolVar(&inter.VerboseOutput, "verbose", false, "output more debug message")
 	flag.Parse()
 	fmt.Println("mixch-dl", programVersion)
 	if argVersion {
 		return
 	}
-	inter.AutoLoadCookie = argCookieFromBrowser
 	var url string
 	if flag.NArg() > 0 {
 		url = flag.Arg(0)
 	} else {
-		log.Printf(`
+		fmt.Printf(`
 need a url as argument, for example:
   mixch-dl https://mixch.tv/u/17209506
 
@@ -114,6 +114,7 @@ func downloadFlow(url string) error {
 	defer cancel()
 	var filename string
 	var live inter.Live
+	inter.LogStatus(inter.STATUS_WaitStream)
 	if mixch.Support(url) {
 		netconn = inter.NewNetConn(url)
 		var err error
@@ -143,7 +144,7 @@ func downloadFlow(url string) error {
 		}
 		filename = fmt.Sprintf("spoon-%v", time.Now().Local().Format("2006-01-02-15-04"))
 	} else {
-		fmt.Printf("not support url: %v\n", os.Args[1])
+		inter.LogMsg(false, fmt.Sprintf("not support url: %v\n", os.Args[1]))
 		log.Fatal("not support url")
 	}
 
@@ -152,21 +153,23 @@ func downloadFlow(url string) error {
 
 	ds := make(chan int, 1)
 	go func() {
+		inter.LogStatus(inter.STATUS_Downloading)
 		live.Download(ctx, netconn, fio, filename)
+		inter.LogStatus(inter.STATUS_Finish)
 		ds <- 1
 	}()
 
 	for {
 		select {
 		case <-sigchan:
-			fmt.Printf("\n\nuser cancel\n\n")
+			inter.LogMsg(false, "user cancel")
 			signal.Reset(os.Interrupt)
 			cancel()
-			log.Println("wait download loop end")
+			inter.LogMsg(false, "wait download loop end")
 			<-ds
 			return errors.New("user cancel")
 		case <-ds:
-			log.Println("download loop end")
+			inter.LogMsg(false, "download loop end")
 			return nil
 		default:
 			time.Sleep(time.Duration(1) * time.Second)

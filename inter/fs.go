@@ -1,8 +1,8 @@
 package inter
 
 import (
+	"fmt"
 	"io"
-	"log"
 	"os"
 )
 
@@ -36,11 +36,11 @@ func (this Fs) Exist(filename string) bool {
 }
 
 func (this Fs) Create(filename string) (io.WriteCloser, error) {
-	log.Println("CREATE:", filename)
+	LogMsg(true, fmt.Sprintf("CREATE: %v", filename))
 	return os.Create(filename)
 }
 
 func (this Fs) Delete(filename string) {
-	log.Println("DELETE:", filename)
+	LogMsg(true, fmt.Sprintf("DELETE: %v", filename))
 	os.Remove(filename)
 }

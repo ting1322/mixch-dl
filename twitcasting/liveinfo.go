@@ -3,8 +3,8 @@ package twitcasting
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"inter"
-	"log"
 	"regexp"
 )
 
@@ -47,7 +47,7 @@ func parseChatInfo(info *Live, text string) error {
 	m := _ChatJsonInfo{}
 	err := json.Unmarshal([]byte(text), &m)
 	if err != nil {
-		log.Println(text)
+		inter.LogMsg(false, fmt.Sprintf("in parseChatInfo: json unmarshal fail with text: %v", text))
 		return err
 	}
 	info.Chat = m.Url
