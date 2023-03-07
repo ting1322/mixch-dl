@@ -31,15 +31,15 @@ require (
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/gonuts/binary v0.2.0 // indirect
 	github.com/keybase/go-keychain v0.0.0-20221221221913-9be78f6c498b // indirect
-	github.com/klauspost/compress v1.15.15 // indirect
+	github.com/klauspost/compress v1.16.0 // indirect
 	github.com/mattn/go-isatty v0.0.17 // indirect
 	github.com/ting1322/chat-player/pkg/cplayer v0.0.0-20230204164700-fb69399a3f2c // indirect
 	github.com/zalando/go-keyring v0.2.2 // indirect
 	github.com/zellyn/kooky v0.0.0-20221025221128-3e66d684c4db // indirect
-	golang.org/x/crypto v0.5.0 // indirect
-	golang.org/x/net v0.5.0 // indirect
-	golang.org/x/sys v0.5.0 // indirect
-	golang.org/x/text v0.6.0 // indirect
+	golang.org/x/crypto v0.7.0 // indirect
+	golang.org/x/net v0.8.0 // indirect
+	golang.org/x/sys v0.6.0 // indirect
+	golang.org/x/text v0.8.0 // indirect
 	nhooyr.io/websocket v1.8.7 // indirect
 	www.velocidex.com/golang/go-ese v0.1.0 // indirect
 )
