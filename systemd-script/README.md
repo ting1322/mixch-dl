@@ -9,7 +9,7 @@
 
 # usage
 
-`*.service` 之中的路徑要先建立，比如我的家目錄會有 umi 資料夾。
+`*.service` 之中的路徑要先建立，比如我的家目錄會有 tmp 資料夾。
 
 檔案放好之後，執行 `systemctl --user daemon-reload`
 

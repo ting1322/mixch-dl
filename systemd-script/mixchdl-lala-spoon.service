@@ -1,0 +1,20 @@
+# systemd service file, save to
+#  /home/ting/.config/systemd/user/mixch-dl-umi-tc.service
+#
+
+[Unit]
+Description=mixch-dl for LaLa (Spoon)
+Documentation=https://github.com/ting1322/mixch-dl
+PartOf=mixchdl.target
+
+[Service]
+ExecSearchPath=%h/go/bin:%h/.local/bin:%h/sdk/flutter/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin
+WorkingDirectory=%h/tmp
+ExecStart=mixch-dl --verbose -loop https://www.spooncast.net/jp/live/@lala_ukulele
+StandardOutput=append:%h/tmp/lala-spoon.log
+StandardError=inherit
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=default.target

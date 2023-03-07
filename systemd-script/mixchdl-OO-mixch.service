@@ -1,0 +1,16 @@
+[Unit]
+Description=mixch-dl for Aoi Sizuku Ch.葵井詩雫 (mixch)
+Documentation=https://github.com/ting1322/mixch-dl
+PartOf=mixchdl.target
+
+[Service]
+ExecSearchPath=%h/go/bin:%h/.local/bin:%h/sdk/flutter/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin
+WorkingDirectory=%h/tmp
+ExecStart=mixch-dl --verbose -loop https://mixch.tv/u/17258569/live
+StandardOutput=append:%h/tmp/sizuku-mixch.log
+StandardError=inherit
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=default.target

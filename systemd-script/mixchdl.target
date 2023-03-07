@@ -6,9 +6,11 @@
 Description=mixch downloader
 Documentation=https://github.com/ting1322/mixch-dl
 
-Requires=mixch-dl-umi-mixch.service
-Requires=mixch-dl-umi-tc.service
-Requires=mixch-dl-lala-spoon.service
+Requires=mixchdl-lala-spoon.service
+Requires=mixchdl-tofu-spoon.service
+Requires=mixchdl-tofu-tc.service
+Requires=mixchdl-umi-mixch.service
+Requires=mixchdl-umi-tc.service
 
 After=default.target
 
