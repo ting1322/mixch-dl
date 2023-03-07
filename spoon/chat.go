@@ -68,6 +68,9 @@ func (this *Chat) Connect(ctx context.Context, wssUrl string, liveName string) {
 			return
 		default:
 			this.connectTry1(ctx, wssUrl, writer)
+			if ctx.Err() == nil {
+				time.Sleep(5 * time.Second)
+			}
 		}
 	}
 }
