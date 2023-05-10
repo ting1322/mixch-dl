@@ -7,6 +7,7 @@ import (
 	"inter"
 	"io"
 	"log"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -102,6 +103,8 @@ func (this *Downloader) downloadAndWrite(ctx context.Context, m3u8Url string, ts
 			var url string
 			if strings.HasPrefix(ts.name, "../") {
 				url = baseurl[0:strings.LastIndex(baseurl, "/")] + "/" + ts.name[3:]
+			} else if strings.HasPrefix(ts.name, "http") {
+				url = ts.name
 			} else {
 				url = baseurl + "/" + ts.name
 			}
@@ -137,6 +140,7 @@ func (this *Downloader) downloadMergeLoop(ctx context.Context, m3u8Url string) {
 			return
 		default:
 			err := this.downloadAndWrite(ctx, m3u8Url, tspart)
+			var nestedErr NestedM3u8Error
 			if err == nil {
 				retry = 30
 				this.timer.Reset(1500 * time.Millisecond)
@@ -144,6 +148,10 @@ func (this *Downloader) downloadMergeLoop(ctx context.Context, m3u8Url string) {
 			} else if errors.Is(err, M3U8FormatError) || errors.Is(err, inter.ErrHttpNotOk) {
 				log.Printf("stream end? %v\n", err)
 				retry = 0
+			} else if errors.As(err, &nestedErr) {
+				m3u8Url = nestedErr.url
+				log.Println("sub m3u8: ", m3u8Url)
+				retry--
 			} else if ctx.Err() == context.Canceled {
 				retry = 0
 			} else {
@@ -176,6 +184,11 @@ func (this *Downloader) DownloadMerge(ctx context.Context, m3u8Url string, conn 
 	}
 }
 
+type ResolutionM3u8 struct {
+	resolution string
+	url        string
+}
+
 func (this *Downloader) downloadM3U8(ctx context.Context, url string, conn inter.INet) (*M3U8, error) {
 	text, err := conn.GetWebPage(ctx, url)
 	if err != nil {
@@ -194,11 +207,12 @@ func (this *Downloader) downloadM3U8(ctx context.Context, url string, conn inter
 		return isTs && !ignore
 	}
 
+	reExtinf, _ := regexp.Compile(`#EXTINF:(\d+(\.\d+)?)`)
 	for _, line := range strings.Split(text, "\n") {
 		if len(line) > 0 && line[0] == '#' {
-			if strings.HasPrefix(line, "#EXTINF:") {
-				timeText := line[8 : len(line)-1]
-				time, err = strconv.ParseFloat(timeText, 64)
+			match := reExtinf.FindStringSubmatch(line)
+			if match != nil || len(match) == 1 {
+				time, err = strconv.ParseFloat(match[1], 64)
 				if err != nil {
 					return nil, err
 				}
@@ -220,8 +234,48 @@ func (this *Downloader) downloadM3U8(ctx context.Context, url string, conn inter
 		}
 	}
 	if m3u8.version == 0 || len(m3u8.tsList) == 0 {
+		if strings.Contains(text, "#EXT-X-STREAM-INF:") {
+			subM3u8 := make(map[string]string, 0)
+			cur_resolution := ""
+			re, _ := regexp.Compile(`VIDEO="([0-9p]+)"`)
+			for _, line := range strings.Split(text, "\n") {
+				if strings.HasPrefix(line, "#EXT-X-STREAM-INF:") {
+					match := re.FindStringSubmatch(line)
+					if match == nil || len(match) < 1 {
+						cur_resolution = ""
+					} else {
+						cur_resolution = match[1]
+					}
+				} else if !strings.HasPrefix(line, "#") {
+					subM3u8[cur_resolution] = line
+				}
+			}
+			if len(subM3u8) > 0 {
+				if u, exist := subM3u8["720p60"]; exist {
+					return nil, NestedM3u8Error{url: u}
+				}
+				if u, exist := subM3u8["720p30"]; exist {
+					return nil, NestedM3u8Error{url: u}
+				}
+				if u, exist := subM3u8["480p30"]; exist {
+					return nil, NestedM3u8Error{url: u}
+				}
+				if u, exist := subM3u8["360p30"]; exist {
+					return nil, NestedM3u8Error{url: u}
+				}
+			}
+		}
+
 		inter.LogMsg(true, "m3u8 parse error: "+text)
 		return nil, M3U8FormatError
 	}
 	return m3u8, nil
+}
+
+type NestedM3u8Error struct {
+	url string
+}
+
+func (m NestedM3u8Error) Error() string {
+	return "it is a nested m3u8, use new url download again. " + m.url
 }
