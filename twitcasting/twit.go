@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"inter"
+	"github.com/ting1322/mixch-dl/inter"
 	"net/url"
 	"regexp"
 	"strings"

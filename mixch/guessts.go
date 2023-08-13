@@ -2,7 +2,7 @@ package mixch
 
 import (
 	"fmt"
-	"inter"
+	"github.com/ting1322/mixch-dl/inter"
 	"regexp"
 	"strconv"
 )

@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"inter"
+	"github.com/ting1322/mixch-dl/inter"
+	"github.com/ting1322/mixch-dl/mixch"
 	"io"
-	"mixch"
 	"sync"
 	"time"
 

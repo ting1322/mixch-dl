@@ -5,15 +5,15 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"inter"
+	"github.com/ting1322/mixch-dl/inter"
+	"github.com/ting1322/mixch-dl/m3u8"
+	"github.com/ting1322/mixch-dl/mixch"
+	"github.com/ting1322/mixch-dl/spoon"
+	"github.com/ting1322/mixch-dl/twitcasting"
 	"log"
-	"m3u8"
-	"mixch"
 	"os"
 	"os/signal"
-	"spoon"
 	"time"
-	"twitcasting"
 )
 
 var (

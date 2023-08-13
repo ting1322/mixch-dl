@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"inter"
+	"github.com/ting1322/mixch-dl/inter"
 	"regexp"
 )
 

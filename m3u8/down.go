@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"inter"
+	"github.com/ting1322/mixch-dl/inter"
 	"io"
 	"log"
 	"regexp"

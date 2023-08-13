@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"inter"
-	"m3u8"
+	"github.com/ting1322/mixch-dl/inter"
+	"github.com/ting1322/mixch-dl/m3u8"
 	"regexp"
 	"strings"
 	"time"
@@ -59,7 +59,7 @@ func (this *Mixch) waitLiveLoop(ctx context.Context, interval time.Duration, con
 		<-timer.C
 		err := this.LoadUserPage(ctx, conn)
 		if err == nil {
-			inter.LogMsg(false,"live start.")
+			inter.LogMsg(false, "live start.")
 			return nil
 		}
 		if !errors.Is(err, inter.ErrNolive) {
