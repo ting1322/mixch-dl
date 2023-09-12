@@ -237,7 +237,7 @@ func (this *Downloader) downloadM3U8(ctx context.Context, url string, conn inter
 		if strings.Contains(text, "#EXT-X-STREAM-INF:") {
 			subM3u8 := make(map[string]string, 0)
 			cur_resolution := ""
-			re, _ := regexp.Compile(`VIDEO="([0-9p]+)"`)
+			re, _ := regexp.Compile(`VIDEO="(\w+)"`)
 			for _, line := range strings.Split(text, "\n") {
 				if strings.HasPrefix(line, "#EXT-X-STREAM-INF:") {
 					match := re.FindStringSubmatch(line)
@@ -261,6 +261,12 @@ func (this *Downloader) downloadM3U8(ctx context.Context, url string, conn inter
 					return nil, NestedM3u8Error{url: u}
 				}
 				if u, exist := subM3u8["360p30"]; exist {
+					return nil, NestedM3u8Error{url: u}
+				}
+				if u, exist := subM3u8["160p30"]; exist {
+					return nil, NestedM3u8Error{url: u}
+				}
+				if u, exist := subM3u8["audio_only"]; exist {
 					return nil, NestedM3u8Error{url: u}
 				}
 			}
