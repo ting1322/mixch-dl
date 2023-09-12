@@ -3,7 +3,7 @@ package twitcasting
 import (
 	"context"
 	"fmt"
-	"github.com/ting1322/mixch-dl/inter"
+	"mixch-dl/inter"
 	"io"
 	"sync"
 	"time"

@@ -1,4 +1,4 @@
-module github.com/ting1322/mixch-dl
+module mixch-dl
 
 go 1.20
 

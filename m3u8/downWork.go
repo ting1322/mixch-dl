@@ -2,7 +2,7 @@ package m3u8
 
 import (
 	"context"
-	"github.com/ting1322/mixch-dl/inter"
+	"mixch-dl/inter"
 )
 
 type DownloadWorker struct {
