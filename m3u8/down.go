@@ -16,6 +16,8 @@ import (
 
 var M3U8FormatError error = errors.New("m3u8 format error")
 
+var PreferFmt string = ""
+
 type Downloader struct {
 	seq            int
 	timer          *time.Timer
@@ -251,6 +253,11 @@ func (this *Downloader) downloadM3U8(ctx context.Context, url string, conn inter
 				}
 			}
 			if len(subM3u8) > 0 {
+				if PreferFmt != "" {
+					if u, exist := subM3u8[PreferFmt]; exist {
+						return nil, NestedM3u8Error{url: u}
+					}
+				}
 				if u, exist := subM3u8["720p60"]; exist {
 					return nil, NestedM3u8Error{url: u}
 				}

@@ -47,6 +47,7 @@ func main() {
 	flag.BoolVar(&inter.AutoLoadCookie, "cookies-from-browser", false, "do not load cookie from browser. (default enable)")
 	flag.BoolVar(&inter.JsonOutput, "json", false, "output message with json format")
 	flag.BoolVar(&inter.VerboseOutput, "verbose", false, "output more debug message")
+	flag.StringVar(&m3u8.PreferFmt, "prefer-fmt", "", "prefer audio only format")
 	flag.Parse()
 	fmt.Println("mixch-dl", programVersion)
 	if argVersion {
