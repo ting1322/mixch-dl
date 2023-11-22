@@ -46,8 +46,9 @@ func main() {
 	flag.BoolVar(&argVersion, "version", false, "show program version and exit.")
 	flag.BoolVar(&inter.AutoLoadCookie, "cookies-from-browser", false, "do not load cookie from browser. (default enable)")
 	flag.BoolVar(&inter.JsonOutput, "json", false, "output message with json format")
-	flag.BoolVar(&inter.VerboseOutput, "verbose", false, "output more debug message")
 	flag.StringVar(&m3u8.PreferFmt, "prefer-fmt", "", "prefer audio only format")
+	flag.BoolVar(&spoon.DownloadChatRoom, "spoon-chat", true, "downlaod spoon chat room")
+	flag.BoolVar(&inter.VerboseOutput, "verbose", false, "output more debug message")
 	flag.Parse()
 	fmt.Println("mixch-dl", programVersion)
 	if argVersion {
@@ -75,6 +76,9 @@ need a url as argument, for example:
 
   mixch-dl https://www.spooncast.net/jp/live/@lala_ukulele
     (spoon jp)
+
+  mixch-dl -spoon-chat=false https://......
+    (spoon, without live chat & htm)
 `)
 		return
 	}

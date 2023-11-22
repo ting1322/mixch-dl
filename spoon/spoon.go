@@ -15,6 +15,8 @@ import (
 	"github.com/ting1322/chat-player/pkg/cplayer"
 )
 
+var DownloadChatRoom bool = true
+
 type Spoon struct {
 	Id           string
 	Name         string
@@ -177,7 +179,7 @@ func (this *Spoon) Download(ctx context.Context, netconn inter.INet, fio inter.I
 		jsAppVersion: this.jsAppVersion,
 	}
 	var cs chan int
-	if len(this.Chat) > 0 {
+	if len(this.Chat) > 0 && DownloadChatRoom {
 		cs = make(chan int, 1)
 		go func() {
 			chat.Connect(ctx2, this.Chat, filename)
@@ -230,7 +232,9 @@ func (this *Spoon) Download(ctx context.Context, netconn inter.INet, fio inter.I
 		inter.FfmpegMetadata(filename+".mp4", meta)
 	}
 	inter.FfmpegFastStartMp4(filename + ".mp4")
-	generateHtml(filename + ".mp4")
+	if cs != nil {
+		generateHtml(filename + ".mp4")
+	}
 	return nil
 }
 
