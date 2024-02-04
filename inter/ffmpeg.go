@@ -128,6 +128,25 @@ func FfprobeTime(filename string) (time.Duration, error) {
 	return time.Duration(math.Round(floatTime)), nil
 }
 
+func FfprobeVideoCount(filename string) (int, error) {
+	cmdarg := []string{"-v", "error", "-select_streams",
+		"v", "-show_entries", "stream=index", "-of",
+		"csv=p=0", filename}
+	var cmd *exec.Cmd = exec.Command(ffprobeName, cmdarg...)
+	LogMsg(false, cmd.String())
+	outData, err := cmd.Output()
+	if err != nil {
+		return 0, err
+	}
+	text := strings.Trim(string(outData), " \r\n")
+	LogMsg(true, fmt.Sprintf("FFPROBE: %v", text))
+	if text == "" {
+		return 0, nil
+	}
+	count := len(strings.Split(text, "\n"))
+	return count, nil
+}
+
 func replaceFile(src, dest, bak string) error {
 	LogMsg(false, fmt.Sprintf("replace %v with %v", dest, src))
 	LogMsg(true, fmt.Sprintf("rename %v to %v", dest, bak))

@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"mixch-dl/inter"
 	"mixch-dl/m3u8"
-	"log"
 	"regexp"
 	"strings"
 	"time"
@@ -219,9 +219,14 @@ func (this *Spoon) Download(ctx context.Context, netconn inter.INet, fio inter.I
 		return inter.ErrNolive
 	}
 
+	videoCount, err := inter.FfprobeVideoCount(filename + ".mp4")
+	if err != nil {
+		inter.LogMsg(false, "error: cannot get video stream count from mp4 file")
+		videoCount = 1
+	}
 	coverFile := <-coverCh
 	if coverFile != "" {
-		inter.FfmpegAttachThumbnail(filename+".mp4", coverFile, 1)
+		inter.FfmpegAttachThumbnail(filename+".mp4", coverFile, videoCount)
 	}
 	if this.title != "" {
 		meta := inter.FfmpegMeta{
