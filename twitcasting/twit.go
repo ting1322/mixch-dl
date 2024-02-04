@@ -16,7 +16,7 @@ import (
 type jmap = map[string]any
 
 type Live struct {
-	//ImageUrl string
+	ImageUrl string
 	//Name     string
 	IsLive  bool
 	Id      string
@@ -109,6 +109,8 @@ func (this *Live) LoadUserPage(ctx context.Context, conn inter.INet) error {
 	if err != nil {
 		return fmt.Errorf("parse video info: %w\nresponse: %v", err, webText)
 	}
+	dNumber := float64(time.Now().UnixMilli()) / 5000.0
+	this.ImageUrl = fmt.Sprintf("https://twitcasting.tv/userajax.php?c=updateindexthumbnail&m=%v&u=%v&d=%.4f", this.MovieId, this.Id, dNumber)
 
 	pdata := make(map[string]string)
 	pdata["movie_id"] = this.MovieId
@@ -142,6 +144,19 @@ func (this *Live) Download(ctx context.Context, netconn inter.INet, fio inter.IF
 		}()
 	}
 
+	coverCh := make(chan string, 1)
+	if this.ImageUrl == "" {
+		coverCh <- ""
+	} else {
+		inter.LogMsg(true, "img: " + this.ImageUrl)
+		coverFileName, err := inter.DownloadThumbnail(ctx, netconn, fio, filename, this.ImageUrl)
+		if err != nil {
+			coverCh <- ""
+		} else {
+			coverCh <- coverFileName
+		}
+	}
+
 	this.vd = &VDown{
 		fs:   fio,
 		conn: netconn,
@@ -149,6 +164,10 @@ func (this *Live) Download(ctx context.Context, netconn inter.INet, fio inter.IF
 	}
 	this.vd.DownloadMerge(ctx, netconn, this.VideoUrl, filename)
 	cancel()
+	coverFile := <-coverCh
+	if coverFile != "" {
+		inter.FfmpegAttachThumbnail(filename+".mp4", coverFile, 1)
+	}
 	if cs != nil {
 		<-cs
 	}

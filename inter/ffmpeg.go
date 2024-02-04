@@ -91,7 +91,7 @@ func FfmpegAttachThumbnail(video, img string, disposition int) {
 	outfile := "temp-" + video
 	cmdarg := []string{"-y", "-i", video, "-i", img,
 		"-map", "0", "-map", "1",
-		fmt.Sprintf("-disposition:%d", disposition), "attached_pic",
+		fmt.Sprintf("-disposition:v:%d", disposition), "attached_pic",
 		"-c", "copy",
 		outfile}
 	var cmd *exec.Cmd = exec.Command(ffmpegName, cmdarg...)
