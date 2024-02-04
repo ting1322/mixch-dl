@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/zellyn/kooky"
-	_ "github.com/zellyn/kooky/browser/all" // register cookie store finders!
+	"github.com/browserutils/kooky"
+	_ "github.com/browserutils/kooky/browser/all" // register cookie store finders!
 )
 
 func importCookie(client *http.Client, baseurl string) {
