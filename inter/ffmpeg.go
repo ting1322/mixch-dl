@@ -19,7 +19,8 @@ func FfmpegMerge(in, out string, fixts bool) {
 	LogMsg(false, fmt.Sprintf("merge %v file by ffmpeg", out))
 	cmdarg := []string{"-y", "-i", in, "-c", "copy"}
 	if fixts {
-		cmdarg = append(cmdarg, "-bsf", "setts=ts=TS-STARTPTS")
+		// cmdarg = append(cmdarg, "-bsf", "setts=ts=TS-STARTPTS")
+		cmdarg = append(cmdarg, "-fps_mode", "auto")
 	}
 	cmdarg = append(cmdarg, "-map", "0", "-dn", "-ignore_unknown")
 	if fixts {
