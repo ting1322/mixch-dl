@@ -31,7 +31,6 @@ func (this *VDown) DownloadMerge(ctx context.Context, netconn inter.INet, wssurl
 	this.downloadLoop(ctx, netconn, wssurl, tspartFilename)
 	if this.fs.Exist(tspartFilename) {
 		inter.FfmpegMerge(tspartFilename, filename+".mp4", true)
-		inter.FfmpegFastStartMp4(filename + ".mp4")
 	}
 }
 

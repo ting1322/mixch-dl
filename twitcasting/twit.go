@@ -171,6 +171,7 @@ func (this *Live) Download(ctx context.Context, netconn inter.INet, fio inter.IF
 	if cs != nil {
 		<-cs
 	}
+	inter.FfmpegFastStartMp4(filename + ".mp4")
 	generateHtml(filename + ".mp4")
 	return nil
 }
