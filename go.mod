@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/browserutils/kooky v0.2.1-0.20240119192416-d4f81abd0200
 	github.com/mattn/go-isatty v0.0.14
-	github.com/ting1322/chat-player/pkg/cplayer v0.0.0-20230204164700-fb69399a3f2c
+	github.com/ting1322/chat-player/pkg/cplayer v0.0.0-20240210074142-6757c32868d5
 	nhooyr.io/websocket v1.8.10
 )
 
@@ -21,9 +21,9 @@ require (
 	github.com/gonuts/binary v0.2.0 // indirect
 	github.com/keybase/go-keychain v0.0.0-20230523030712-b5615109f100 // indirect
 	github.com/zalando/go-keyring v0.2.3 // indirect
-	golang.org/x/crypto v0.13.0 // indirect
+	golang.org/x/crypto v0.19.0 // indirect
 	golang.org/x/net v0.15.0 // indirect
-	golang.org/x/sys v0.12.0 // indirect
-	golang.org/x/text v0.13.0 // indirect
+	golang.org/x/sys v0.17.0 // indirect
+	golang.org/x/text v0.14.0 // indirect
 	www.velocidex.com/golang/go-ese v0.2.0 // indirect
 )
