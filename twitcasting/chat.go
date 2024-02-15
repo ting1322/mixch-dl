@@ -47,6 +47,9 @@ func (this *Chat) Connect(ctx context.Context, netconn inter.INet, wssurl, filen
 			return
 		default:
 			this.connectTry1(ctx, netconn, wssurl, writer, startTime)
+			if ctx.Err() == nil {
+				time.Sleep(5 * time.Second)
+			}
 		}
 	}
 
