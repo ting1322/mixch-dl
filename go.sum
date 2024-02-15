@@ -51,8 +51,8 @@ github.com/stretchr/testify v1.7.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/
 github.com/stretchr/testify v1.8.0/go.mod h1:yNjHg4UonilssWZ8iaSj1OCr/vHnekPRkoO+kdMU+MU=
 github.com/stretchr/testify v1.8.1 h1:w7B6lhMri9wdJUVmEZPGGhZzrYTPvgJArz7wNPgYKsk=
 github.com/stretchr/testify v1.8.1/go.mod h1:w2LPCIKwWwSfY2zedu0+kehJoqGctiVI29o6fzry7u4=
-github.com/ting1322/chat-player/pkg/cplayer v0.0.0-20240210125437-e6adeaf9272d h1:OCfg748Tz5tcTXvXqphSNtrD3+mfTww5wUqrCQ5cQHA=
-github.com/ting1322/chat-player/pkg/cplayer v0.0.0-20240210125437-e6adeaf9272d/go.mod h1:HwJNRPFCaqZ0hM0O0VX0WEFCaqvCmtTUIVPquj1XhOQ=
+github.com/ting1322/chat-player/pkg/cplayer v0.0.0-20240211162600-16303f413ce0 h1:bd0eorjegz2Bxr9kdCs8lkoKcQHReb4pMTYRj9zD3xc=
+github.com/ting1322/chat-player/pkg/cplayer v0.0.0-20240211162600-16303f413ce0/go.mod h1:HwJNRPFCaqZ0hM0O0VX0WEFCaqvCmtTUIVPquj1XhOQ=
 github.com/zalando/go-keyring v0.2.3 h1:v9CUu9phlABObO4LPWycf+zwMG7nlbb3t/B5wa97yms=
 github.com/zalando/go-keyring v0.2.3/go.mod h1:HL4k+OXQfJUWaMnqyuSOc0drfGPX2b51Du6K+MRgZMk=
 golang.org/x/crypto v0.19.0 h1:ENy+Az/9Y1vSrlrvBSyna3PITt4tiZLf7sgCjZBX7Wo=

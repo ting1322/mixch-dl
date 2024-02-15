@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/browserutils/kooky v0.2.1-0.20240119192416-d4f81abd0200
 	github.com/mattn/go-isatty v0.0.14
-	github.com/ting1322/chat-player/pkg/cplayer v0.0.0-20240210125437-e6adeaf9272d
+	github.com/ting1322/chat-player/pkg/cplayer v0.0.0-20240211162600-16303f413ce0
 	nhooyr.io/websocket v1.8.10
 )
 
