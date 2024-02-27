@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"mixch-dl/inter"
 	"io"
 	"log"
+	"mixch-dl/inter"
 	"regexp"
 	"strconv"
 	"strings"
@@ -30,6 +30,7 @@ type Downloader struct {
 	fs             inter.IFs
 	tspartFilename string
 	hasMap         bool
+	UseInnerAudio  bool
 	GuessTs        func(firstTs, baseurl string, downloadedIdx int) []string
 	IgnoreTs       func(urlText string) bool // ts line in m3u8
 }
@@ -201,6 +202,19 @@ func (this *Downloader) downloadMergeLoop(ctx context.Context, m3u8Url string) {
 	}
 }
 
+func (this *Downloader) DownloadPart(ctx context.Context, m3u8Url string, conn inter.INet, fs inter.IFs, filename string) {
+	this.timer = time.NewTimer(2 * time.Second)
+	this.conn = conn
+	this.fs = fs
+	this.tspartFilename = filename
+	this.downloadMergeLoop(ctx, m3u8Url)
+	if fs.Exist(this.tspartFilename) {
+		if this.GetFragCount() == 0 {
+			fs.Delete(this.tspartFilename)
+		}
+	}
+}
+
 func (this *Downloader) DownloadMerge(ctx context.Context, m3u8Url string, conn inter.INet, fs inter.IFs, filename string) {
 	this.timer = time.NewTimer(2 * time.Second)
 	this.conn = conn
@@ -233,7 +247,7 @@ func (this *Downloader) downloadM3U8(ctx context.Context, url string, conn inter
 	var time float64
 	m3u8 := &M3U8{}
 
-	tsRe, _ := regexp.Compile(`\.(ts|m4v)`)
+	tsRe, _ := regexp.Compile(`\.(ts|m4v|m4a)`)
 	tsNeedSave := func(line string) bool {
 		isTs := tsRe.FindStringSubmatch(line)
 		ignore := this.IgnoreTs != nil && this.IgnoreTs(line)
@@ -258,7 +272,7 @@ func (this *Downloader) downloadM3U8(ctx context.Context, url string, conn inter
 			} else if strings.HasPrefix(line, "#EXT-X-MAP:URI=") {
 				uri := strings.TrimPrefix(line, "#EXT-X-MAP:URI=")
 				if strings.HasPrefix(uri, "\"") {
-					uri = uri[1:len(uri)-2]
+					uri = uri[1 : len(uri)-2]
 				}
 				m3u8.x_map = uri
 			} else if strings.HasPrefix(line, "#EXT-X-ENDLIST") {
@@ -273,6 +287,13 @@ func (this *Downloader) downloadM3U8(ctx context.Context, url string, conn inter
 		}
 	}
 	if m3u8.version == 0 || len(m3u8.tsList) == 0 {
+		if strings.Contains(text, "#EXT-X-MEDIA:TYPE=AUDIO") && this.UseInnerAudio {
+			re, _ := regexp.Compile(`#EXT-X-MEDIA:TYPE=AUDIO.+,URI="(.+\.m3u8)"`)
+			match := re.FindStringSubmatch(text)
+			if match != nil {
+				return nil, NestedM3u8Error{url: match[1]}
+			}
+		}
 		if strings.Contains(text, "#EXT-X-STREAM-INF:") {
 			subM3u8 := make(map[string]string, 0)
 			cur_resolution := ""

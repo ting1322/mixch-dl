@@ -35,6 +35,27 @@ func FfmpegMerge(in, out string, fixts bool) {
 	}
 }
 
+func FfmpegMergeAV(vfile, afile, out string, fixts bool) {
+	LogMsg(false, fmt.Sprintf("merge %v file by ffmpeg", out))
+	cmdarg := []string{"-y", "-i", vfile, "-i", afile, "-c", "copy"}
+	if fixts {
+		// cmdarg = append(cmdarg, "-bsf", "setts=ts=TS-STARTPTS")
+		cmdarg = append(cmdarg, "-fps_mode", "auto")
+	}
+	cmdarg = append(cmdarg, "-map", "0", "-map", "1", "-dn", "-ignore_unknown")
+	if fixts {
+		cmdarg = append(cmdarg, "-ss", "1ms")
+	}
+	cmdarg = append(cmdarg, out)
+	var cmd *exec.Cmd = exec.Command(ffmpegName, cmdarg...)
+	LogMsg(false, cmd.String())
+	err := cmd.Run()
+	if err == nil {
+		os.Remove(vfile)
+		os.Remove(afile)
+	}
+}
+
 type FfmpegMeta struct {
 	Title   string
 	Artist  string

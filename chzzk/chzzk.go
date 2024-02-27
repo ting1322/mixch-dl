@@ -17,15 +17,15 @@ import (
 var DownloadChatRoom bool = true
 
 type Chzzk struct {
-	Id           string
-	Name         string
-	liveId       string
-	M3u8Url      string
-	imgUrl       string
-	title        string
-	Chat         string
-	status       string
-	vd           *m3u8.Downloader
+	Id       string
+	Name     string
+	liveId   string
+	M3u8Url  string
+	M3u8UrlA string
+	imgUrl   string
+	title    string
+	Chat     string
+	status   string
 }
 
 func New(text string) *Chzzk {
@@ -86,7 +86,8 @@ func (this *Chzzk) LoadLiveDetail(ctx context.Context, conn inter.INet) error {
 		return inter.ErrNolive
 	}
 
-	log.Println("m3u8 url:", this.M3u8Url)
+	log.Println("video m3u8 url:", this.M3u8Url)
+	log.Println("audio m3u8 url:", this.M3u8UrlA)
 
 	return nil
 }
@@ -99,73 +100,106 @@ func (this *Chzzk) parseLiveDetail(jsonText string) bool {
 	decoder.UseNumber()
 	decoder.Decode(&jsonmap)
 	//json.Unmarshal([]byte(jsonText), &jsonmap)
-	if content, exist := jsonmap["content"]; exist {
-		if status, exist := content.(jmap)["status"]; exist {
-			this.status = status.(string)
+	content, exist := jsonmap["content"]
+	if !exist {
+		return false
+	}
+	if status, exist := content.(jmap)["status"]; exist {
+		this.status = status.(string)
+	}
+	if channel, exist := content.(jmap)["channel"]; exist {
+		if channelName, exist := channel.(jmap)["channelName"]; exist {
+			this.Name = channelName.(string)
 		}
-		if channel, exist := content.(jmap)["channel"]; exist {
-			if channelName, exist := channel.(jmap)["channelName"]; exist {
-				this.Name = channelName.(string)
-			}
-		}
-		if liveTitle, exist := content.(jmap)["liveTitle"]; exist {
-			this.title = liveTitle.(string)
-		}
-		//if liveImageUrl, exist := content.(jmap)["liveImageUrl"]; exist {
-		//	this.imgUrl = liveImageUrl.(string)
-		//}
-		if livePlaybackJson, exist := content.(jmap)["livePlaybackJson"]; exist {
-			var jsonmap2 jmap
-			decoder2 := json.NewDecoder(strings.NewReader(livePlaybackJson.(string)))
-			decoder2.UseNumber()
-			decoder2.Decode(&jsonmap2)
-			for _, media := range jsonmap2["media"].([]any) {
-				if path, exist := media.(jmap)["path"]; exist {
-					this.M3u8Url = path.(string)
-					break
-				}
-			}
-			if meta, exist := jsonmap2["meta"]; exist {
-				if videoId, exist := meta.(jmap)["videoId"]; exist {
-					this.liveId = videoId.(string)
-				}
+	}
+	if liveTitle, exist := content.(jmap)["liveTitle"]; exist {
+		this.title = liveTitle.(string)
+	}
+	//if liveImageUrl, exist := content.(jmap)["liveImageUrl"]; exist {
+	//	this.imgUrl = liveImageUrl.(string)
+	//}
+	livePlaybackJson, exist := content.(jmap)["livePlaybackJson"]
+	if !exist {
+		return false
+	}
+	if !this.parseLivePlayback(livePlaybackJson.(string)) {
+		return false
+	}
+	return true
+}
+
+func (this *Chzzk) parseLivePlayback(jsonText string) bool {
+	var jsonmap jmap
+	decoder := json.NewDecoder(strings.NewReader(jsonText))
+	decoder.UseNumber()
+	decoder.Decode(&jsonmap)
+	var hls_media jmap
+	for _, media := range jsonmap["media"].([]any) {
+		if mediaId, exist := media.(jmap)["mediaId"]; exist {
+			if mediaId.(string) == "HLS" {
+				hls_media = media.(jmap)
+				break
 			}
 		}
 	}
-	return this.M3u8Url != ""
+	if hls_media == nil {
+		return false
+	}
+	if path, exist := hls_media["path"]; exist {
+		this.M3u8Url = path.(string)
+	}
+	for _, encodingTrack := range hls_media["encodingTrack"].([]any) {
+		encodingTrackId, exist := encodingTrack.(jmap)["encodingTrackId"]
+		if !exist {
+			continue
+		}
+		if encodingTrackId.(string) != "alow.stream" {
+			continue
+		}
+		path, exist := encodingTrack.(jmap)["path"]
+		if !exist {
+			continue
+		}
+		this.M3u8UrlA = path.(string)
+	}
+
+	if meta, exist := jsonmap["meta"]; exist {
+		if videoId, exist := meta.(jmap)["videoId"]; exist {
+			this.liveId = videoId.(string)
+		}
+	}
+	return this.M3u8Url != "" && this.M3u8UrlA != ""
 }
 
 func (this *Chzzk) Download(ctx context.Context, netconn inter.INet, fio inter.IFs, filename string) error {
 	//ctx2, cancel := context.WithCancel(ctx)
 
-	coverCh := make(chan string, 1)
-	if this.imgUrl == "" {
-		coverCh <- ""
-	} else {
-		coverFileName, err := inter.DownloadThumbnail(ctx, netconn, fio, filename, this.imgUrl)
-		if err != nil {
-			coverCh <- ""
-		} else {
-			coverCh <- coverFileName
+	vch := make(chan string, 1)
+	ach := make(chan string, 1)
+	go func() {
+		vd := &m3u8.Downloader{}
+		vfilename := filename + "-video.part"
+		vd.DownloadPart(ctx, this.M3u8Url, netconn, fio, vfilename)
+		if vd.GetFragCount() == 0 {
+			vch <- ""
 		}
-	}
+		vch <- vfilename
+	}()
+	go func() {
+		ad := &m3u8.Downloader{UseInnerAudio:true}
+		afilename := filename + "-audio.part"
+		ad.DownloadPart(ctx, this.M3u8Url, netconn, fio, afilename)
+		if ad.GetFragCount() == 0 {
+			ach <- ""
+		}
+		ach <- afilename
+	}()
 
-	this.vd = &m3u8.Downloader{}
-	this.vd.DownloadMerge(ctx, this.M3u8Url, netconn, fio, filename)
-	//cancel()
-	if this.vd.GetFragCount() == 0 {
-		return inter.ErrNolive
-	}
+	vfilename := <-vch
+	afilename := <-ach
 
-	videoCount, err := inter.FfprobeVideoCount(filename + ".mp4")
-	if err != nil {
-		inter.LogMsg(false, "error: cannot get video stream count from mp4 file")
-		videoCount = 1
-	}
-	coverFile := <-coverCh
-	if coverFile != "" {
-		inter.FfmpegAttachThumbnail(filename+".mp4", coverFile, videoCount)
-	}
+	inter.FfmpegMergeAV(vfilename, afilename, filename+".mp4", true)
+
 	if this.title != "" {
 		meta := inter.FfmpegMeta{
 			Title:  this.title,
