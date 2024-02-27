@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"mixch-dl/inter"
+	"mixch-dl/chzzk"
 	"mixch-dl/m3u8"
 	"mixch-dl/mixch"
 	"mixch-dl/spoon"
@@ -148,6 +149,14 @@ func downloadFlow(url string) error {
 			return err
 		}
 		filename = fmt.Sprintf("spoon-%v", time.Now().Local().Format("2006-01-02-15-04"))
+	} else if chzzk.Support(url) {
+		netconn = inter.NewNetConn(url)
+		live = chzzk.New(url)
+		err := live.WaitStreamStart(ctx, netconn)
+		if err != nil {
+			return err
+		}
+		filename = fmt.Sprintf("chzzk-%v", time.Now().Local().Format("2006-01-02-15-04"))
 	} else {
 		inter.LogMsg(false, fmt.Sprintf("not support url: %v\n", os.Args[1]))
 		log.Fatal("not support url")

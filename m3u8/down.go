@@ -29,6 +29,7 @@ type Downloader struct {
 	conn           inter.INet
 	fs             inter.IFs
 	tspartFilename string
+	hasMap         bool
 	GuessTs        func(firstTs, baseurl string, downloadedIdx int) []string
 	IgnoreTs       func(urlText string) bool // ts line in m3u8
 }
@@ -73,6 +74,27 @@ func (this *Downloader) tryDownloadLostFrag(ctx context.Context, tsw io.Writer, 
 		successCount, failCount, this.totalTime))
 }
 
+func (this *Downloader) tryAppendBaseUrl(baseUrl string, suffix_url string) string {
+	var url string
+	if strings.HasPrefix(suffix_url, "../") {
+		url = baseUrl[0:strings.LastIndex(baseUrl, "/")] + "/" + suffix_url[3:]
+	} else if strings.HasPrefix(suffix_url, "http") {
+		url = suffix_url
+	} else {
+		url = baseUrl + "/" + suffix_url
+	}
+	return url
+}
+
+func (this *Downloader) tryDownloadXMap(ctx context.Context, tsw io.Writer, url string) error {
+	data, err := this.conn.GetFile(ctx, url)
+	if err != nil {
+		return fmt.Errorf("err: %w, url: %v", err, url)
+	}
+	tsw.Write(data)
+	return nil
+}
+
 func (this *Downloader) downloadAndWrite(ctx context.Context, m3u8Url string, tsw io.Writer) error {
 	m3u8, err := this.downloadM3U8(ctx, m3u8Url, this.conn)
 	this.m3u8 = m3u8
@@ -81,6 +103,15 @@ func (this *Downloader) downloadAndWrite(ctx context.Context, m3u8Url string, ts
 	}
 
 	baseurl := m3u8Url[0:strings.LastIndex(m3u8Url, "/")]
+
+	if m3u8.x_map != "" && !this.hasMap {
+		url := this.tryAppendBaseUrl(baseurl, m3u8.x_map)
+		err = this.tryDownloadXMap(ctx, tsw, url)
+		if err != nil {
+			return err
+		}
+		this.hasMap = true
+	}
 
 	if m3u8.sequence > (this.seq+1) && len(m3u8.tsList) > 0 && this.GuessTs != nil {
 		urlList := this.GuessTs(this.m3u8.tsList[0].name, baseurl, this.seq)
@@ -102,14 +133,7 @@ func (this *Downloader) downloadAndWrite(ctx context.Context, m3u8Url string, ts
 					continue
 				}
 			}
-			var url string
-			if strings.HasPrefix(ts.name, "../") {
-				url = baseurl[0:strings.LastIndex(baseurl, "/")] + "/" + ts.name[3:]
-			} else if strings.HasPrefix(ts.name, "http") {
-				url = ts.name
-			} else {
-				url = baseurl + "/" + ts.name
-			}
+			url := this.tryAppendBaseUrl(baseurl, ts.name)
 			data, err := this.conn.GetFile(ctx, url)
 			if err != nil {
 				return fmt.Errorf("err: %w, url: %v", err, url)
@@ -146,12 +170,18 @@ func (this *Downloader) downloadMergeLoop(ctx context.Context, m3u8Url string) {
 			if err == nil {
 				retry = 30
 				this.timer.Reset(1500 * time.Millisecond)
-				inter.LogProgress(this.GetFragCount(), this.Chat.Count(), this.totalTime)
+				//inter.LogProgress(this.GetFragCount(), this.Chat.Count(), this.totalTime)
 			} else if errors.Is(err, M3U8FormatError) || errors.Is(err, inter.ErrHttpNotOk) {
 				log.Printf("stream end? %v\n", err)
 				retry = 0
 			} else if errors.As(err, &nestedErr) {
-				m3u8Url = nestedErr.url
+				queryIdx := strings.Index(m3u8Url, "?")
+				baseurl := m3u8Url
+				if queryIdx > 0 {
+					baseurl = baseurl[0:queryIdx]
+				}
+				baseurl = baseurl[0:strings.LastIndex(baseurl, "/")]
+				m3u8Url = this.tryAppendBaseUrl(baseurl, nestedErr.url)
 				log.Println("sub m3u8: ", m3u8Url)
 				retry--
 			} else if ctx.Err() == context.Canceled {
@@ -203,10 +233,11 @@ func (this *Downloader) downloadM3U8(ctx context.Context, url string, conn inter
 	var time float64
 	m3u8 := &M3U8{}
 
+	tsRe, _ := regexp.Compile(`\.(ts|m4v)`)
 	tsNeedSave := func(line string) bool {
-		isTs := strings.Contains(line, ".ts")
+		isTs := tsRe.FindStringSubmatch(line)
 		ignore := this.IgnoreTs != nil && this.IgnoreTs(line)
-		return isTs && !ignore
+		return isTs != nil && !ignore
 	}
 
 	reExtinf, _ := regexp.Compile(`#EXTINF:(\d+(\.\d+)?)`)
@@ -224,6 +255,12 @@ func (this *Downloader) downloadM3U8(ctx context.Context, url string, conn inter
 				m3u8.sequence, _ = strconv.Atoi(strings.TrimPrefix(line, "#EXT-X-MEDIA-SEQUENCE:"))
 			} else if strings.HasPrefix(line, "#EXT-X-TARGETDURATION:") {
 				m3u8.targetDuration, _ = strconv.ParseFloat(strings.TrimPrefix(line, "#EXT-X-TARGETDURATION:"), 64)
+			} else if strings.HasPrefix(line, "#EXT-X-MAP:URI=") {
+				uri := strings.TrimPrefix(line, "#EXT-X-MAP:URI=")
+				if strings.HasPrefix(uri, "\"") {
+					uri = uri[1:len(uri)-2]
+				}
+				m3u8.x_map = uri
 			} else if strings.HasPrefix(line, "#EXT-X-ENDLIST") {
 				m3u8.end = true
 			}
@@ -239,14 +276,14 @@ func (this *Downloader) downloadM3U8(ctx context.Context, url string, conn inter
 		if strings.Contains(text, "#EXT-X-STREAM-INF:") {
 			subM3u8 := make(map[string]string, 0)
 			cur_resolution := ""
-			re, _ := regexp.Compile(`VIDEO="(\w+)"`)
+			re, _ := regexp.Compile(`(VIDEO|RESOLUTION)="?(\w+)"?`)
 			for _, line := range strings.Split(text, "\n") {
 				if strings.HasPrefix(line, "#EXT-X-STREAM-INF:") {
 					match := re.FindStringSubmatch(line)
 					if match == nil || len(match) < 1 {
 						cur_resolution = ""
 					} else {
-						cur_resolution = match[1]
+						cur_resolution = match[2]
 					}
 				} else if !strings.HasPrefix(line, "#") {
 					subM3u8[cur_resolution] = line
@@ -257,6 +294,12 @@ func (this *Downloader) downloadM3U8(ctx context.Context, url string, conn inter
 					if u, exist := subM3u8[PreferFmt]; exist {
 						return nil, NestedM3u8Error{url: u}
 					}
+				}
+				if u, exist := subM3u8["1920x1080"]; exist {
+					return nil, NestedM3u8Error{url: u}
+				}
+				if u, exist := subM3u8["1280x720"]; exist {
+					return nil, NestedM3u8Error{url: u}
 				}
 				if u, exist := subM3u8["720p60"]; exist {
 					return nil, NestedM3u8Error{url: u}

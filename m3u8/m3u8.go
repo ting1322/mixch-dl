@@ -7,6 +7,7 @@ type M3U8 struct {
 	sequence       int
 	targetDuration float64
 	tsList         []TsFile
+	x_map          string
 	end            bool
 }
 
