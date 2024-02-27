@@ -10,7 +10,8 @@ set -x
 
 go test mixch-dl/mixch \
    mixch-dl/m3u8 \
-   mixch-dl/twitcasting
+   mixch-dl/twitcasting \
+   mixch-dl/chzzk
 
 go build -o mixch-dl -ldflags "-X main.programVersion=$ver"
 
