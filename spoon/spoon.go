@@ -16,6 +16,8 @@ import (
 )
 
 var DownloadChatRoom bool = true
+var EmbedTitle bool = true
+var FileExt string = ".mp4"
 
 type Spoon struct {
 	Id           string
@@ -219,26 +221,27 @@ func (this *Spoon) Download(ctx context.Context, netconn inter.INet, fio inter.I
 		return inter.ErrNolive
 	}
 
-	videoCount, err := inter.FfprobeVideoCount(filename + ".mp4")
+	videoCount, err := inter.FfprobeVideoCount(filename + FileExt)
 	if err != nil {
 		inter.LogMsg(false, "error: cannot get video stream count from mp4 file")
 		videoCount = 1
 	}
 	coverFile := <-coverCh
 	if coverFile != "" {
-		inter.FfmpegAttachThumbnail(filename+".mp4", coverFile, videoCount)
+		inter.FfmpegAttachThumbnail(filename+FileExt, coverFile, videoCount)
 	}
-	if this.title != "" {
+	if this.title != "" && this.Name != "" {
 		meta := inter.FfmpegMeta{
-			Title:  this.title,
 			Artist: this.Name,
-			Album:  fmt.Sprintf("%v-%v", this.Name, this.title),
 		}
-		inter.FfmpegMetadata(filename+".mp4", meta)
+		if EmbedTitle {
+			meta.Title = this.title
+		}
+		inter.FfmpegMetadata(filename+FileExt, meta)
 	}
-	inter.FfmpegFastStartMp4(filename + ".mp4")
+	inter.FfmpegFastStartMp4(filename + FileExt)
 	if cs != nil {
-		generateHtml(filename + ".mp4")
+		generateHtml(filename + FileExt)
 	}
 	return nil
 }
