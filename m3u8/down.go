@@ -17,6 +17,7 @@ import (
 var M3U8FormatError error = errors.New("m3u8 format error")
 
 var PreferFmt string = ""
+var FileExt string = ".mp4"
 
 type Downloader struct {
 	seq            int
@@ -225,7 +226,7 @@ func (this *Downloader) DownloadMerge(ctx context.Context, m3u8Url string, conn 
 		if this.GetFragCount() == 0 {
 			fs.Delete(this.tspartFilename)
 		} else {
-			inter.FfmpegMerge(this.tspartFilename, filename+".mp4", false)
+			inter.FfmpegMerge(this.tspartFilename, filename+FileExt, false)
 		}
 	}
 }

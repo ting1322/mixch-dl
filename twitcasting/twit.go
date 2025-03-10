@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"mixch-dl/inter"
+	"mixch-dl/m3u8"
 	"net/url"
 	"regexp"
 	"strings"
@@ -148,7 +149,7 @@ func (this *Live) Download(ctx context.Context, netconn inter.INet, fio inter.IF
 	if this.ImageUrl == "" {
 		coverCh <- ""
 	} else {
-		inter.LogMsg(true, "img: " + this.ImageUrl)
+		inter.LogMsg(true, "img: "+this.ImageUrl)
 		coverFileName, err := inter.DownloadThumbnail(ctx, netconn, fio, filename, this.ImageUrl)
 		if err != nil {
 			coverCh <- ""
@@ -166,13 +167,13 @@ func (this *Live) Download(ctx context.Context, netconn inter.INet, fio inter.IF
 	cancel()
 	coverFile := <-coverCh
 	if coverFile != "" {
-		inter.FfmpegAttachThumbnail(filename+".mp4", coverFile, 1)
+		inter.FfmpegAttachThumbnail(filename+m3u8.FileExt, coverFile, 1)
 	}
 	if cs != nil {
 		<-cs
 	}
-	inter.FfmpegFastStartMp4(filename + ".mp4")
-	generateHtml(filename + ".mp4")
+	inter.FfmpegFastStartMp4(filename + m3u8.FileExt)
+	generateHtml(filename + m3u8.FileExt)
 	return nil
 }
 

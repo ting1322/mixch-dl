@@ -186,7 +186,7 @@ func (this *Chzzk) Download(ctx context.Context, netconn inter.INet, fio inter.I
 		vch <- vfilename
 	}()
 	go func() {
-		ad := &m3u8.Downloader{UseInnerAudio:true}
+		ad := &m3u8.Downloader{UseInnerAudio: true}
 		afilename := filename + "-audio.part"
 		ad.DownloadPart(ctx, this.M3u8Url, netconn, fio, afilename)
 		if ad.GetFragCount() == 0 {
@@ -198,7 +198,7 @@ func (this *Chzzk) Download(ctx context.Context, netconn inter.INet, fio inter.I
 	vfilename := <-vch
 	afilename := <-ach
 
-	inter.FfmpegMergeAV(vfilename, afilename, filename+".mp4", true)
+	inter.FfmpegMergeAV(vfilename, afilename, filename+m3u8.FileExt, true)
 
 	if this.title != "" {
 		meta := inter.FfmpegMeta{
@@ -206,9 +206,9 @@ func (this *Chzzk) Download(ctx context.Context, netconn inter.INet, fio inter.I
 			Artist: this.Name,
 			Album:  fmt.Sprintf("%v-%v", this.Name, this.title),
 		}
-		inter.FfmpegMetadata(filename+".mp4", meta)
+		inter.FfmpegMetadata(filename+m3u8.FileExt, meta)
 	}
-	inter.FfmpegFastStartMp4(filename + ".mp4")
+	inter.FfmpegFastStartMp4(filename + m3u8.FileExt)
 	return nil
 }
 

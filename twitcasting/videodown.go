@@ -3,8 +3,9 @@ package twitcasting
 import (
 	"context"
 	"fmt"
-	"mixch-dl/inter"
 	"io"
+	"mixch-dl/inter"
+	"mixch-dl/m3u8"
 	"sync"
 	"time"
 
@@ -30,7 +31,7 @@ func (this *VDown) DownloadMerge(ctx context.Context, netconn inter.INet, wssurl
 	tspartFilename := filename + ".ts.part"
 	this.downloadLoop(ctx, netconn, wssurl, tspartFilename)
 	if this.fs.Exist(tspartFilename) {
-		inter.FfmpegMerge(tspartFilename, filename+".mp4", true)
+		inter.FfmpegMerge(tspartFilename, filename+m3u8.FileExt, true)
 	}
 }
 

@@ -50,7 +50,7 @@ func main() {
 	flag.StringVar(&m3u8.PreferFmt, "prefer-fmt", "", "prefer audio only format")
 	flag.BoolVar(&spoon.DownloadChatRoom, "spoon-chat", true, "downlaod spoon chat room (default true, disable by -spoon-chat=false")
 	flag.BoolVar(&spoon.EmbedTitle, "spoon-title", true, "add title to mp4 metadata (default true, disable by -spoon-title=false)")
-	flag.StringVar(&spoon.FileExt, "spoon-ext", ".mp4", "output file extension, default is '.mp4', can change to .m4a")
+	flag.StringVar(&m3u8.FileExt, "file-ext", ".mp4", "output file extension, default is '.mp4', can change to .m4a")
 	flag.BoolVar(&inter.VerboseOutput, "verbose", false, "output more debug message")
 	flag.Parse()
 	fmt.Println("mixch-dl", programVersion)

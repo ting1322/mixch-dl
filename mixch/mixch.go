@@ -124,15 +124,15 @@ func (this *Mixch) Download(ctx context.Context, netconn inter.INet, fio inter.I
 
 	coverFile := <-coverCh
 	if coverFile != "" {
-		inter.FfmpegAttachThumbnail(filename+".mp4", coverFile, 2)
+		inter.FfmpegAttachThumbnail(filename+m3u8.FileExt, coverFile, 2)
 	}
 	if this.Name != "" {
 		meta := inter.FfmpegMeta{Artist: this.Name, Album: this.Name}
-		inter.FfmpegMetadata(filename+".mp4", meta)
+		inter.FfmpegMetadata(filename+m3u8.FileExt, meta)
 	}
 
-	inter.FfmpegFastStartMp4(filename + ".mp4")
-	generateHtml(filename + ".mp4")
+	inter.FfmpegFastStartMp4(filename + m3u8.FileExt)
+	generateHtml(filename + m3u8.FileExt)
 	return nil
 }
 
