@@ -5,15 +5,16 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"mixch-dl/inter"
+	"log"
 	"mixch-dl/chzzk"
+	"mixch-dl/inter"
 	"mixch-dl/m3u8"
 	"mixch-dl/mixch"
 	"mixch-dl/spoon"
 	"mixch-dl/twitcasting"
-	"log"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"time"
 )
 
@@ -23,6 +24,7 @@ var (
 	fio            inter.IFs        = &inter.Fs{}
 	netconn        inter.INet
 	pass           string
+	dateFolder     bool
 	loopAtFinish   bool
 )
 
@@ -51,6 +53,7 @@ func main() {
 	flag.BoolVar(&spoon.DownloadChatRoom, "spoon-chat", true, "downlaod spoon chat room (default true, disable by -spoon-chat=false")
 	flag.BoolVar(&spoon.EmbedTitle, "spoon-title", true, "add title to mp4 metadata (default true, disable by -spoon-title=false)")
 	flag.StringVar(&m3u8.FileExt, "file-ext", ".mp4", "output file extension, default is '.mp4', can change to .m4a")
+	flag.BoolVar(&dateFolder, "date-folder", false, "create folder with today date for output file. (default disable)")
 	flag.BoolVar(&inter.VerboseOutput, "verbose", false, "output more debug message")
 	flag.Parse()
 	fmt.Println("mixch-dl", programVersion)
@@ -120,7 +123,6 @@ need a url as argument, for example:
 func downloadFlow(url string) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	var filename string
 	var live inter.Live
 	inter.LogStatus(inter.STATUS_WaitStream)
 	if mixch.Support(url) {
@@ -134,7 +136,6 @@ func downloadFlow(url string) error {
 		if err != nil {
 			return err
 		}
-		filename = fmt.Sprintf("mixch-%v", time.Now().Local().Format("2006-01-02-15-04"))
 	} else if twitcasting.Support(url) {
 		netconn = inter.NewNetConn(url)
 		live = twitcasting.New(url, pass)
@@ -142,7 +143,6 @@ func downloadFlow(url string) error {
 		if err != nil {
 			return err
 		}
-		filename = fmt.Sprintf("twitcasting-%v", time.Now().Local().Format("2006-01-02-15-04"))
 	} else if spoon.Support(url) {
 		netconn = inter.NewNetConn(url)
 		live = spoon.New(url)
@@ -150,7 +150,6 @@ func downloadFlow(url string) error {
 		if err != nil {
 			return err
 		}
-		filename = fmt.Sprintf("spoon-%v", time.Now().Local().Format("2006-01-02-15-04"))
 	} else if chzzk.Support(url) {
 		netconn = inter.NewNetConn(url)
 		live = chzzk.New(url)
@@ -158,10 +157,20 @@ func downloadFlow(url string) error {
 		if err != nil {
 			return err
 		}
-		filename = fmt.Sprintf("chzzk-%v", time.Now().Local().Format("2006-01-02-15-04"))
 	} else {
 		inter.LogMsg(false, fmt.Sprintf("not support url: %v\n", os.Args[1]))
 		log.Fatal("not support url")
+	}
+
+	var filename string
+	filename = time.Now().Local().Format("2006-01-02-15-04")
+	if dateFolder {
+		var dir = time.Now().Local().Format("2006-01-02")
+		if !fio.Exist(dir) {
+			os.Mkdir(dir, 0775)
+		}
+
+		filename = filepath.Join(dir, filename)
 	}
 
 	sigchan := make(chan os.Signal, 1)
