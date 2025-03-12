@@ -5,6 +5,7 @@ import (
 	"math"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -64,7 +65,7 @@ type FfmpegMeta struct {
 }
 
 func FfmpegMetadata(video string, meta FfmpegMeta) {
-	outfile := "temp-" + video
+	outfile := getTempFileName(video)
 	cmdarg := []string{"-y", "-i", video}
 	if meta.Title != "" {
 		cmdarg = append(cmdarg, "-metadata", "title=\""+meta.Title+"\"")
@@ -92,8 +93,14 @@ func FfmpegMetadata(video string, meta FfmpegMeta) {
 	}
 }
 
+func getTempFileName(origFileName string) string {
+	var dir, name = filepath.Split(origFileName)
+	newName := filepath.Join(dir, "temp-" + name)
+	return newName
+}
+
 func FfmpegFastStartMp4(video string) {
-	outfile := "temp-" + video
+	outfile := getTempFileName(video)
 	cmdarg := []string{"-y", "-i", video, "-c", "copy", "-movflags", "+faststart", outfile}
 	var cmd *exec.Cmd = exec.Command(ffmpegName, cmdarg...)
 	LogMsg(false, cmd.String())
@@ -110,7 +117,7 @@ func FfmpegFastStartMp4(video string) {
 
 func FfmpegAttachThumbnail(video, img string, disposition int) {
 	LogMsg(false, "attach cover image to video")
-	outfile := "temp-" + video
+	outfile := getTempFileName(video)
 	cmdarg := []string{"-y", "-i", video, "-i", img,
 		"-map", "0", "-map", "1",
 		fmt.Sprintf("-disposition:v:%d", disposition), "attached_pic",
